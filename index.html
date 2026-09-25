@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Advanced Interface — Chia-An (Joan) Yu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F2EE; --ink:#15171C; --muted:#6B6C70; --line:#DDDBD4; --card:#FFFFFF;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#121316; --ink:#EDEDEA; --muted:#9A9BA0; --line:#2A2B30; --card:#1A1B1F; }
+}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:Inter,"Helvetica Neue",Arial,sans-serif; line-height:1.5}
+main{max-width:1120px; margin:0 auto; padding:56px 24px 80px}
+header{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:24px}
+h1{font-size:clamp(28px,4vw,40px); font-weight:600; letter-spacing:-0.02em; margin:0}
+.meta{color:var(--muted); font-size:14px; text-align:right}
+h2{font-size:15px; font-weight:600; margin:40px 0 4px}
+.sub{color:var(--muted); font-size:14px; margin:0 0 20px}
+.grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:20px}
+.card{background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; text-decoration:none; color:inherit; display:flex; flex-direction:column; transition:transform .2s ease, box-shadow .2s ease}
+.card:hover{transform:translateY(-3px); box-shadow:0 18px 40px -24px rgba(0,0,0,.35)}
+.card:focus-visible{outline:2px solid var(--ink); outline-offset:3px}
+.preview{position:relative; aspect-ratio:16/10; overflow:hidden; background:#111}
+.preview iframe{position:absolute; top:0; left:0; width:200%; height:200%; border:0; transform:scale(.5); transform-origin:0 0; pointer-events:none}
+.info{padding:16px 18px 18px; display:flex; justify-content:space-between; align-items:baseline; gap:12px}
+.info b{font-weight:600; font-size:16px}
+.tone{font-size:12px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:3px 10px; white-space:nowrap}
+footer{margin-top:56px; color:var(--muted); font-size:13px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Advanced Interface</h1>
+    <div class="meta">Chia-An (Joan) Yu<br>Fall 2026 · ArtCenter College of Design</div>
+  </header>
+
+  <h2>Week 1 — Progress Indicators</h2>
+  <p class="sub">Three sets, each with a determinate and an indeterminate indicator.</p>
+  <div class="grid">
+    <a class="card" href="wk1/bouncy-plus-progress.html">
+      <div class="preview"><iframe src="wk1/bouncy-plus-progress.html" title="Bouncy Plus preview" loading="lazy" tabindex="-1"></iframe></div>
+      <div class="info"><b>Bouncy Plus</b><span class="tone">Playful</span></div>
+    </a>
+    <a class="card" href="wk1/springs-blocks-progress.html">
+      <div class="preview"><iframe src="wk1/springs-blocks-progress.html" title="Springs Blocks preview" loading="lazy" tabindex="-1"></iframe></div>
+      <div class="info"><b>Springs Blocks</b><span class="tone">Quirky</span></div>
+    </a>
+    <a class="card" href="wk1/specimen-tag-progress.html">
+      <div class="preview"><iframe src="wk1/specimen-tag-progress.html" title="Specimen Tag preview" loading="lazy" tabindex="-1"></iframe></div>
+      <div class="info"><b>Specimen Tag</b><span class="tone">Quirky</span></div>
+    </a>
+  </div>
+
+  <footer>Instructor: Dan Park</footer>
+</main>
+</body>
+</html>
