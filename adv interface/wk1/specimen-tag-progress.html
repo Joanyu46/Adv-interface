@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Specimen Tag</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{ box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%}
+body{margin:0; background:#04201C; display:grid; place-items:center}
+.wrap{width:min(1100px, 100% - 24px); display:grid; gap:clamp(8px, 3vw, 32px); grid-template-columns:1fr 1fr}
+canvas{display:block; width:100%}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100"><canvas id="det"></canvas></div>
+  <div role="progressbar" aria-label="Loading"><canvas id="ind"></canvas></div>
+</div>
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const clamp = (x,a,b) => Math.max(a, Math.min(b, x));
+  const ease = x => x*x*(3-2*x);
+  function makeStage(canvas, aspect){
+    const st = { c:canvas, ctx:canvas.getContext('2d'), w:0, h:0, dpr:1 };
+    st.resize = () => {
+      const w = canvas.parentElement.clientWidth; if (!w) return;
+      const h = Math.round(w*aspect);
+      st.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(w*st.dpr); canvas.height = Math.round(h*st.dpr);
+      canvas.style.height = h + 'px'; st.w = w; st.h = h;
+    };
+    st.begin = () => { st.ctx.setTransform(st.dpr,0,0,st.dpr,0,0); st.ctx.clearRect(0,0,st.w,st.h); };
+    return st;
+  }
+  // determinate: irregular jumps 0 -> 100, hold, reset. p follows with a springy overshoot.
+  function detDriver(){
+    const d = { p:0, v:0, target:0, doneT:-1, kicks:0 };
+    (async () => { while (true){
+      d.target = 0; d.p = 0; d.v = 0; await wait(1500);
+      let x = 0;
+      while (x < 1){ x = Math.min(1, x + 0.03 + Math.random()*0.1); d.target = x; d.kicks++; await wait(320 + Math.random()*460); }
+      await wait(3200);
+    }})();
+    d.step = (dt, t) => {
+      if (reduce){ d.p = d.target; }
+      else { const a = 190*(d.target - d.p) - 16*d.v; d.v += a*dt; d.p += d.v*dt; }
+      const done = d.target >= 1 && d.p > 0.985;
+      if (done && d.doneT < 0) d.doneT = t; if (!done && d.target < 1) d.doneT = -1;
+    };
+    return d;
+  }
+  // indeterminate: idle -> running -> completed, looping
+  function indDriver(){
+    const d = { run:0, phase:'idle', doneT:-1, T:0 };
+    d.step = (dt, t) => {
+      const T = t % 9.8; d.T = T;
+      d.phase = T < 1.5 ? 'idle' : T < 7 ? 'run' : 'done';
+      d.doneT = d.phase === 'done' ? T - 7 : -1;
+      const tr = d.phase === 'run' ? 1 : 0;
+      d.run += (tr - d.run) * (reduce ? 1 : 1 - Math.pow(0.02, dt));
+    };
+    return d;
+  }
+  function start(stages, draw){
+    const ro = new ResizeObserver(() => stages.forEach(s => s.resize())); ro.observe(document.body);
+    stages.forEach(s => s.resize());
+    let last = performance.now(), t = 0;
+    const frame = now => {
+      requestAnimationFrame(frame);
+      const dt = Math.min(0.05, (now - last)/1000); last = now; t += dt;
+      if (stages.some(s => !s.w)){ stages.forEach(s => s.resize()); if (stages.some(s => !s.w)) return; }
+      try { draw(dt, t); } catch(e){ console.error(e); }
+    };
+    requestAnimationFrame(frame);
+  }
+  const det = detDriver(), ind = indDriver();
+  const sDet = makeStage(document.getElementById('det'), 0.62);
+  const sInd = makeStage(document.getElementById('ind'), 0.62);
+  const YEL = [242,242,138], BLU = [168,228,250], INK = '#10231F';
+  const backOut = x => { const c = 1.6; return 1 + (c+1)*Math.pow(x-1,3) + c*Math.pow(x-1,2); };
+  const font = (wg, fs) => `${wg} ${fs}px Inter, "Helvetica Neue", Arial, sans-serif`;
+  const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+
+  // ---------- dot-matrix glyphs (5 x 7), drawn as dashes like the reference ----------
+  const G = {
+    '0':['.###.','#...#','#..##','#.#.#','##..#','#...#','.###.'], '1':['..#..','.##..','..#..','..#..','..#..','..#..','.###.'],
+    '2':['.###.','#...#','....#','...#.','..#..','.#...','#####'], '3':['####.','....#','....#','.###.','....#','....#','####.'],
+    '4':['...#.','..##.','.#.#.','#..#.','#####','...#.','...#.'], '5':['#####','#....','####.','....#','....#','#...#','.###.'],
+    '6':['..##.','.#...','#....','####.','#...#','#...#','.###.'], '7':['#####','....#','...#.','..#..','.#...','.#...','.#...'],
+    '8':['.###.','#...#','#...#','.###.','#...#','#...#','.###.'], '9':['.###.','#...#','#...#','.####','....#','...#.','.##..'],
+    'check':['.....','....#','...##','#.##.','###..','.#...','.....'],
+    'glass':['#####','.#.#.','..#..','..#..','.#.#.','#...#','#####'], 'ring':['.###.','##.##','#...#','#...#','#...#','##.##','.###.'],
+    'arrows':['..#..','.###.','#.#.#','..#..','#.#.#','.###.','..#..'], 'dots':['.....','.....','.....','#.#.#','.....','.....','.....'],
+  };
+  // runs of '#' in each row become dashes: {x, y, len}
+  function segs(rows, ox = 0){ const out = []; rows.forEach((r, y) => { let x = 0; while (x < r.length){ if (r[x] === '#'){ let l = 1; while (r[x+l] === '#') l++; out.push({ x: x + ox, y, len: l }); x += l; } else x++; } }); return out; }
+  function glyphSegs(key){ if (key.length === 2 && /\d\d/.test(key)) return segs(G[key[0]], 0).concat(segs(G[key[1]], 6)).map(s => ({ ...s, w: 11 })); return segs(G[key]).map(s => ({ ...s, w: 5 })); }
+  // a morphing glyph: dashes scatter and regroup whenever the key changes
+  function Matrix(){ return { key:null, from:[], to:[], t0:-9, seed:1 }; }
+  function setGlyph(m, key, t){ if (key === m.key) return; m.from = currentSegs(m, t); m.to = glyphSegs(key); m.key = key; m.t0 = t; m.seed++; }
+  function currentSegs(m, t){ const k = clamp((t - m.t0)/0.38, 0, 1); if (k >= 1) return m.to.map(s => ({ ...s })); return lerpSet(m, k).map(s => ({ x:s.x, y:s.y, len:s.len, w:s.w })); }
+  function lerpSet(m, k){
+    const n = Math.max(m.from.length, m.to.length), r = rng(m.seed*7919), out = [];
+    const cx = (m.to[0] ? m.to[0].w : 5)/2 - 0.5;
+    for (let i=0;i<n;i++){
+      const a = m.from[i] || { x: cx, y: 3, len: 0, w: m.to[0] ? m.to[0].w : 5 }, b = m.to[i] || { x: cx, y: 3, len: 0, w: a.w };
+      const d = clamp((k - (i % 7)*0.035)/0.75, 0, 1), e = ease(d);
+      const jx = (r() - 0.5)*4*Math.sin(e*Math.PI), jy = (r() - 0.5)*3*Math.sin(e*Math.PI);
+      out.push({ x: a.x + (b.x - a.x)*e + jx, y: a.y + (b.y - a.y)*e + jy, len: a.len + (b.len - a.len)*e, w: b.w });
+    }
+    return out;
+  }
+  function drawMatrix(ctx, m, t, cx, cy, cell, col, alpha = 1){
+    const k = clamp((t - m.t0)/0.38, 0, 1), list = k >= 1 ? m.to : lerpSet(m, k);
+    const W = list.length ? list[0].w : 5, th = cell*0.62;
+    ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = col;
+    for (const s of list){
+      if (s.len <= 0.05) continue;
+      const x = cx + (s.x - W/2)*cell + cell*0.06, y = cy + (s.y - 3.5)*cell + (cell - th)/2, L = Math.max(th, s.len*cell - cell*0.12);
+      ctx.beginPath(); ctx.roundRect(x, y, L, th, th/2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ---------- specimen textures (like slides under a microscope) ----------
+  function texture(base, blobs, specks, seed){
+    const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), r = rng(seed);
+    x.fillStyle = base; x.fillRect(0, 0, 128, 128);
+    for (let i=0;i<26;i++){ const bx = r()*128, by = r()*128, br = 6 + r()*16; const g = x.createRadialGradient(bx, by, 0, bx, by, br);
+      g.addColorStop(0, blobs[i % blobs.length]); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(bx - br, by - br, br*2, br*2); }
+    for (let i=0;i<40;i++){ x.fillStyle = specks; x.globalAlpha = 0.5 + r()*0.5; x.beginPath(); x.arc(r()*128, r()*128, 0.6 + r()*1.6, 0, 7); x.fill(); }
+    x.globalAlpha = 1; return c;
+  }
+  const TEX = [ texture('#D9DEE2', ['rgba(170,178,186,0.6)','rgba(240,242,245,0.9)'], 'rgba(90,96,104,0.7)', 3),
+                texture('#C6D4B2', ['rgba(150,190,80,0.55)','rgba(230,238,200,0.8)'], 'rgba(120,150,40,0.8)', 5),
+                texture('#8FC6D0', ['rgba(240,220,150,0.8)','rgba(200,236,240,0.7)'], 'rgba(250,230,160,0.9)', 9) ];
+
+  // ---------- gooey tag (flat) ----------
+  const mk = () => { const c = document.createElement('canvas'); return [c, c.getContext('2d', { willReadFrequently:true })]; };
+  const [M, MC] = mk(), [Fc, FC] = mk();
+  function goo(st, shapes, stops, H, alpha = 1){
+    const { ctx, w, h, dpr } = st, s = 0.5*dpr, Wh = Math.ceil(w*s), Hh = Math.ceil(h*s);
+    M.width = Wh; M.height = Hh; MC.setTransform(s,0,0,s,0,0); MC.fillStyle = '#fff';
+    for (const o of shapes){ MC.beginPath(); MC.roundRect(o.x - o.w/2, o.y - o.h/2, o.w, o.h, Math.min(o.w, o.h)/2); MC.fill(); }
+    Fc.width = Wh; Fc.height = Hh; const BIG = Wh*2;
+    FC.shadowColor = '#fff'; FC.shadowBlur = H*0.18*s; FC.shadowOffsetX = BIG; FC.drawImage(M, -BIG, 0);
+    const img = FC.getImageData(0, 0, Wh, Hh), d = img.data, sx = stops.map(q => ({ x: q.x*s, c: q.c }));
+    for (let y=0;y<Hh;y++) for (let x=0;x<Wh;x++){
+      const i = (y*Wh + x)*4, a = d[i+3]/255, t = (a - 0.4)/0.14; if (t <= 0){ d[i+3] = 0; continue; }
+      let c; if (x <= sx[0].x) c = sx[0].c; else if (x >= sx[sx.length-1].x) c = sx[sx.length-1].c;
+      else { let j = 0; while (x > sx[j+1].x) j++; const u = (x - sx[j].x)/(sx[j+1].x - sx[j].x); c = sx[j].c.map((v, n) => v + (sx[j+1].c[n] - v)*u); }
+      d[i] = c[0]; d[i+1] = c[1]; d[i+2] = c[2]; d[i+3] = (t >= 1 ? 1 : t*t*(3 - 2*t))*255*alpha;
+    }
+    FC.putImageData(img, 0, 0); ctx.drawImage(Fc, 0, 0, w, h);
+  }
+  const sp = (o, key, vkey, target, dt, k, c) => { if (reduce){ o[key] = target; o[vkey] = 0; return; } const a = k*(target - o[key]) - c*o[vkey]; o[vkey] += a*dt; o[key] += o[vkey]*dt; };
+
+  const dS = { body:0, bv:0, node:0, nv:0, mx: Matrix(), jy:0, jv:0, kicks:0, was:false, air:false };
+  const iS = { mx: Matrix(), clock:0 };
+  const ICONS = ['glass', 'ring', 'arrows', 'dots'];
+
+  start([sDet, sInd], (dt, t) => {
+    det.step(dt, t); ind.step(dt, t);
+
+    // ---- determinate: the tag grows with progress; its bubble shows the percent in dot-matrix digits ----
+    {
+      const st = sDet, { ctx, w, h } = st; st.begin();
+      const H = h*0.26, cy = h*0.5, xL = w*0.08, maxBody = w*0.54, gap = H*0.6, B = H*1.08;
+      const p = clamp(det.target, 0, 1), done = det.doneT >= 0, k = done ? t - det.doneT : 0;
+      if (det.target <= 0 && det.p < 0.01){ dS.body = 0; dS.bv = 0; dS.node = 0; dS.nv = 0; }
+      sp(dS, 'body', 'bv', p, dt, 110, 11); sp(dS, 'node', 'nv', p > 0 ? 1 : 0, dt, 150, 12);
+      // hop: launched on each progress step, falls back under gravity, bounces once
+      if (det.kicks !== dS.kicks){ dS.kicks = det.kicks; if (!reduce && p > 0){ dS.jv = -H*6.5; } }
+      if (done && !dS.was && !reduce) dS.jv = -H*9; dS.was = done;
+      if (!reduce){ dS.jv += H*40*dt; dS.jy += dS.jv*dt; if (dS.jy > 0){ dS.jy = 0; dS.jv = Math.abs(dS.jv) > H*2 ? -dS.jv*0.35 : 0; } }
+      const air = clamp(-dS.jy/(H*0.9), 0, 1), impact = dS.jy >= 0 && Math.abs(dS.jv) > 0.1 ? 1 : 0;
+      const sqx = 1 + (dS.jy >= -H*0.05 ? clamp(Math.abs(dS.jv)/(H*12), 0, 0.25) : -0.08*air), sqy = 1/sqx;
+      const bw = H + (maxBody - H)*clamp(dS.body, 0, 1.05), nd = clamp(dS.node, 0, 1.1);
+      const nx = xL + bw + gap*nd - (1 - Math.min(1, nd))*H*0.6, br = B*(0.35 + 0.65*nd);
+      const by = cy + dS.jy; const shapes = [{ x: xL + bw/2, y: cy, w: bw, h: H }]; if (nd > 0.02) shapes.push({ x: nx, y: by, w: br*sqx, h: br*sqy });
+      goo(st, shapes, nd > 0.05 ? [{ x: xL, c: YEL }, { x: xL + bw, c: YEL }, { x: nx - br*0.3, c: BLU }] : [{ x: xL, c: YEL }], H, p > 0 || done ? 1 : 0.7);
+      const fs = H*0.24;
+      ctx.save(); ctx.beginPath(); ctx.roundRect(xL, cy - H/2, bw, H, H/2); ctx.clip();
+      ctx.globalAlpha = clamp((bw - H*1.2)/(H*1.0), 0, 1); ctx.fillStyle = INK; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.font = font(600, fs*1.1); ctx.fillText(done ? 'Complete' : 'Loading...', xL + H*0.4, cy + 1);
+      ctx.restore();
+      const v = Math.min(99, Math.round(clamp(det.p, 0, 1)*100));
+      setGlyph(dS.mx, done ? 'check' : String(v).padStart(2, '0'), t);
+      if (nd > 0.4) drawMatrix(ctx, dS.mx, t, nx, by, br*(dS.mx.key === 'check' ? 0.1 : 0.068), INK, clamp((nd - 0.4)/0.4, 0, 1));
+      st.c.parentElement.setAttribute('aria-valuenow', done ? 100 : v);
+    }
+
+    // ---- indeterminate: three specimen dots shuffle like a typing indicator; the bubble's icon keeps re-forming ----
+    {
+      const st = sInd, { ctx, w, h } = st; st.begin();
+      const H = h*0.26, cy = h*0.5, B = H*1.08, bw = w*0.5, xL = w*0.5 - (bw + H*0.6 + B*0.5)/2, nx = xL + bw + H*0.6;
+      const run = ind.run, done = ind.phase === 'done', idle = ind.phase === 'idle', k = done ? ind.doneT : 0;
+      if (!reduce) iS.clock += dt*(idle ? 0 : 1);
+      const bph = (iS.clock*1.5) % 1, hop = (idle || done || reduce) ? 0 : Math.sin(bph*Math.PI)*run;
+      const land = (idle || done || reduce) ? 0 : Math.max(0, 1 - Math.min(bph, 1 - bph)*7)*run;   // squash near the ground
+      const by = cy - H*0.85*hop, bsx = 1 + 0.2*land - 0.08*hop, bsy = 1 - 0.18*land + 0.1*hop;
+      goo(st, [{ x: xL + bw/2, y: cy + H*0.04*land, w: bw, h: H*(1 - 0.05*land) }, { x: nx, y: by, w: B*bsx, h: B*bsy }], [{ x: xL, c: YEL }, { x: xL + bw, c: YEL }, { x: nx - B*0.3, c: BLU }], H, idle ? 0.7 : 1);
+      const fs = H*0.24; ctx.fillStyle = INK; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = font(600, fs);
+      ctx.fillText(done ? 'Ready' : 'Loading', xL + H*0.4, cy - fs*0.55);
+      // three textured dots: one stretches into a pill and slides over to the next slot, then snaps back
+      const dr = H*0.15, x0 = xL + H*0.4 + dr, step = dr*2.9, dy = cy + fs*0.62;
+      const ph = (iS.clock*0.9) % 3, j = Math.floor(ph), f = ph - j, s1 = ease(clamp(f*2, 0, 1)), s2 = ease(clamp(f*2 - 1, 0, 1));
+      for (let n=0;n<3;n++){
+        let a = x0 + n*step, b = a;
+        if (!idle && !done && run > 0.1){
+          if (n === j){ b = a + step*s1*(j < 2 ? 1 : -2); a = a + step*s2*(j < 2 ? 1 : -2); }
+          else if (n === (j + 1) % 3){ const back = j < 2 ? -1 : 2; a += step*back*s2; b = a; }
+        }
+        const lo = Math.min(a, b), hi = Math.max(a, b);
+        const jy = (idle || done || reduce) ? 0 : -dr*0.9*Math.max(0, Math.sin(iS.clock*6.5 - n*1.1))*run, yy = dy + jy;
+        ctx.save(); ctx.beginPath(); ctx.roundRect(lo - dr, yy - dr, hi - lo + dr*2, dr*2, dr); ctx.clip();
+        ctx.drawImage(TEX[n], lo - dr - (iS.clock*6 % 20), yy - dr*2, dr*6, dr*6); ctx.restore();
+      }
+      if (!done){ const icon = ICONS[Math.floor(iS.clock/1.1) % ICONS.length]; setGlyph(iS.mx, idle ? 'dots' : icon, t); }
+      else setGlyph(iS.mx, 'check', t);
+      drawMatrix(ctx, iS.mx, t, nx, by, B*0.1, INK, idle ? 0.5 : 1);
+    }
+  });
+  try { document.fonts.load('600 20px Inter'); } catch(e){}
+})();
+</script>
+</body>
+</html>
