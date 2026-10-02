@@ -2,65 +2,204 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Advanced Interface — Chia-An (Joan) Yu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#F3F2EE; --ink:#15171C; --muted:#6B6C70; --line:#DDDBD4; --card:#FFFFFF;
-  box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
-}
-@media (prefers-color-scheme:dark){
-  :root{ --bg:#121316; --ink:#EDEDEA; --muted:#9A9BA0; --line:#2A2B30; --card:#1A1B1F; }
-}
-*,*::before,*::after{box-sizing:inherit}
-body{margin:0; background:var(--bg); color:var(--ink); font-family:Inter,"Helvetica Neue",Arial,sans-serif; line-height:1.5}
-main{max-width:1120px; margin:0 auto; padding:56px 24px 80px}
-header{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:24px}
-h1{font-size:clamp(28px,4vw,40px); font-weight:600; letter-spacing:-0.02em; margin:0}
-.meta{color:var(--muted); font-size:14px; text-align:right}
-h2{font-size:15px; font-weight:600; margin:40px 0 4px}
-.sub{color:var(--muted); font-size:14px; margin:0 0 20px}
-.grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:20px}
-.card{background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; text-decoration:none; color:inherit; display:flex; flex-direction:column; transition:transform .2s ease, box-shadow .2s ease}
-.card:hover{transform:translateY(-3px); box-shadow:0 18px 40px -24px rgba(0,0,0,.35)}
-.card:focus-visible{outline:2px solid var(--ink); outline-offset:3px}
-.preview{position:relative; aspect-ratio:16/10; overflow:hidden; background:#111}
-.preview iframe{position:absolute; top:0; left:0; width:200%; height:200%; border:0; transform:scale(.5); transform-origin:0 0; pointer-events:none}
-.info{padding:16px 18px 18px; display:flex; justify-content:space-between; align-items:baseline; gap:12px}
-.info b{font-weight:600; font-size:16px}
-.tone{font-size:12px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:3px 10px; white-space:nowrap}
-footer{margin-top:56px; color:var(--muted); font-size:13px}
+  :root {
+    --bg: #f4f2ee;
+    --ink: #161616;
+    --muted: #666460;
+    --line: #dad7d1;
+    --card: #ffffff;
+    --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 1072px; margin: 0 auto; padding: 64px 24px 80px; }
+
+  /* ---------- header ---------- */
+  .top { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; padding-bottom: 28px; border-bottom: 1px solid var(--line); }
+  h1 { margin: 0; font-size: clamp(34px, 5vw, 46px); line-height: 1; font-weight: 600; letter-spacing: -.03em; }
+  .who { margin: 0; text-align: right; font-size: 15px; line-height: 1.6; color: var(--muted); }
+
+  /* ---------- a week ---------- */
+  .week { margin-top: 48px; }
+  .week h2 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -.005em; }
+  .week .sub { margin: 8px 0 0; font-size: 15px; color: var(--muted); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-top: 24px; }
+  @media (min-width: 900px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+
+  /* ---------- a card ---------- */
+  .card {
+    display: block; text-decoration: none; color: inherit; background: var(--card); border-radius: 18px; overflow: hidden;
+    border: 1px solid var(--line); transition: transform .25s ease, box-shadow .25s ease;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 22px 34px -18px rgba(0, 0, 0, .28); }
+  .card:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .thumb { position: relative; overflow: hidden; aspect-ratio: 340 / 213; background: var(--tb, #222); }
+  .thumb iframe { position: absolute; left: 0; top: 0; width: 1000px; height: 627px; border: 0; transform-origin: 0 0; pointer-events: none; opacity: 0; transition: opacity .5s ease; background: transparent; }
+  .thumb iframe.ready { opacity: 1; }
+  .thumb svg { display: block; width: 100%; height: 100%; }
+  .meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 18px 20px; }
+  .meta h3 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+  .tone { padding: 5px 12px; border-radius: 99px; border: 1px solid var(--line); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+
+  .group { margin: 30px 0 0; font-size: 13px; font-weight: 600; color: var(--ink); }
+  .group span { font-weight: 400; color: var(--muted); }
+  .foot { margin: 56px 0 0; font-size: 14px; color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }
 </style>
 </head>
 <body>
-<main>
-  <header>
+<main class="page">
+
+  <header class="top">
     <h1>Advanced Interface</h1>
-    <div class="meta">Chia-An (Joan) Yu<br>Fall 2026 · ArtCenter College of Design</div>
+    <p class="who">Chia-An (Joan) Yu<br>Fall 2026 · ArtCenter College of Design</p>
   </header>
 
-  <h2>Week 1 — Progress Indicators</h2>
-  <p class="sub">Three sets, each with a determinate and an indeterminate indicator.</p>
-  <div class="grid">
-    <a class="card" href="wk1/bouncy-plus-progress.html">
-      <div class="preview"><iframe src="wk1/bouncy-plus-progress.html" title="Bouncy Plus preview" loading="lazy" tabindex="-1"></iframe></div>
-      <div class="info"><b>Bouncy Plus</b><span class="tone">Playful</span></div>
-    </a>
-    <a class="card" href="wk1/springs-blocks-progress.html">
-      <div class="preview"><iframe src="wk1/springs-blocks-progress.html" title="Springs Blocks preview" loading="lazy" tabindex="-1"></iframe></div>
-      <div class="info"><b>Springs Blocks</b><span class="tone">Quirky</span></div>
-    </a>
-    <a class="card" href="wk1/specimen-tag-progress.html">
-      <div class="preview"><iframe src="wk1/specimen-tag-progress.html" title="Specimen Tag preview" loading="lazy" tabindex="-1"></iframe></div>
-      <div class="info"><b>Specimen Tag</b><span class="tone">Quirky</span></div>
-    </a>
-  </div>
+  <!-- ============ WEEK 1 ============ -->
+  <section class="week" id="week-1">
+    <h2>Week 1 — Progress Indicators</h2>
+    <p class="sub">Three sets, each with a determinate and an indeterminate indicator.</p>
+    <div class="cards">
 
-  <footer>Instructor: Dan Park</footer>
+      <!-- tip: replace these preview drawings with your own screenshot: <img src="wk1/bouncy-plus.png" alt=""> -->
+      <a class="card" href="wk1/bouncy-plus-progress.html">
+        <div class="thumb" style="background:#222222">
+          <svg viewBox="0 0 340 213" role="img" aria-label="The word loaded inside a glowing green blob">
+            <defs>
+              <linearGradient id="bg1" x1="0" x2="1"><stop offset="0" stop-color="#2fe0c0"/><stop offset=".5" stop-color="#5cf27a"/><stop offset="1" stop-color="#a9f6c9"/></linearGradient>
+              <filter id="gl1" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="7"/></filter>
+            </defs>
+            <text x="170" y="74" text-anchor="middle" font-family="Inter, sans-serif" font-size="34" font-weight="300" fill="#8a8a8a" fill-opacity=".7">loading</text>
+            <rect x="82" y="128" width="176" height="56" rx="26" fill="#3dff8a" fill-opacity=".6" filter="url(#gl1)"/>
+            <rect x="82" y="128" width="176" height="56" rx="26" fill="url(#bg1)"/>
+            <text x="170" y="170" text-anchor="middle" font-family="Inter, sans-serif" font-size="38" font-weight="900" fill="#0c110e">loaded</text>
+          </svg>
+        </div>
+        <div class="meta"><h3>Bouncy Plus</h3><span class="tone">Playful</span></div>
+      </a>
+
+      <a class="card" href="wk1/springs-blocks-progress.html">
+        <div class="thumb" style="background:#cfd2d8">
+          <svg viewBox="0 0 340 213" role="img" aria-label="Lime blocks spelling out words">
+            <g font-family="Inter, sans-serif" font-size="9" font-weight="700" fill="#161616" text-anchor="middle">
+              <rect x="44" y="52" width="32" height="22" rx="11" fill="#e4fb9a"/><text x="60" y="66">S</text>
+              <rect x="86" y="52" width="40" height="22" rx="3" fill="#d3f56b"/><text x="106" y="66">U</text>
+              <rect x="136" y="52" width="32" height="22" rx="11" fill="#c2ee3c"/><text x="152" y="66">C</text>
+              <rect x="44" y="92" width="44" height="22" rx="3" fill="#cdf26b"/><text x="66" y="106">C</text>
+              <rect x="98" y="92" width="32" height="22" rx="11" fill="#e4fb9a"/><text x="114" y="106">E</text>
+              <rect x="56" y="132" width="32" height="22" rx="11" fill="#e4fb9a"/><text x="72" y="146">S</text>
+              <rect x="98" y="132" width="40" height="22" rx="3" fill="#c2ee3c"/><text x="118" y="146">S</text>
+            </g>
+            <g fill="#161616" fill-opacity=".35" opacity=".6">
+              <rect x="206" y="52" width="32" height="22" rx="11" fill="#e8ebd9"/><rect x="248" y="52" width="40" height="22" rx="3" fill="#dfe6c0"/>
+              <rect x="206" y="92" width="44" height="22" rx="3" fill="#dfe6c0"/><rect x="258" y="92" width="30" height="22" rx="11" fill="#e8ebd9"/>
+              <rect x="218" y="132" width="32" height="22" rx="11" fill="#e8ebd9"/><rect x="258" y="132" width="40" height="22" rx="3" fill="#dfe6c0"/>
+            </g>
+          </svg>
+        </div>
+        <div class="meta"><h3>Springs Blocks</h3><span class="tone">Quirky</span></div>
+      </a>
+
+      <a class="card" href="wk1/specimen-tag-progress.html">
+        <div class="thumb" style="background:#00231f">
+          <svg viewBox="0 0 340 213" role="img" aria-label="Two pill-shaped progress tags">
+            <rect x="26" y="92" width="96" height="30" rx="15" fill="#f5ec9d"/>
+            <text x="46" y="111" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="#161616">Complete</text>
+            <circle cx="132" cy="107" r="15" fill="#8fe3f2"/>
+            <rect x="196" y="92" width="94" height="30" rx="15" fill="#a8b078"/>
+            <text x="208" y="105" font-family="Inter, sans-serif" font-size="6" font-weight="700" fill="#161616">Loading</text>
+            <circle cx="288" cy="107" r="15" fill="#6fb3c2"/>
+          </svg>
+        </div>
+        <div class="meta"><h3>Specimen Tag</h3><span class="tone">Quirky</span></div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ============ WEEK 2 ============ -->
+  <section class="week" id="week-2">
+    <h2>Week 2 — Badges and Tooltips</h2>
+    <p class="sub">Ten sets: five badges, then five tooltips.</p>
+
+    <p class="group">Badges <span>— five sets, each with a badge without content and a badge with content</span></p>
+    <div class="cards">
+      <a class="card" href="wk2/ball.html">
+        <div class="thumb" style="--tb:#F0F0F2"><iframe title="Live preview of Ball" data-src="wk2/ball.html" tabindex="-1" aria-hidden="true"></iframe></div>
+        <div class="meta"><h3>Ball</h3><span class="tone">Elegant</span></div>
+      </a>
+      <a class="card" href="wk2/hop.html">
+        <div class="thumb" style="--tb:#F7F8FA"><iframe title="Live preview of Hop" data-src="wk2/hop.html" tabindex="-1" aria-hidden="true"></iframe></div>
+        <div class="meta"><h3>Hop</h3><span class="tone">Playful</span></div>
+      </a>
+      <a class="card" href="wk2/wave.html">
+        <div class="thumb" style="--tb:#ECECEC"><iframe title="Live preview of Wave" data-src="wk2/wave.html" tabindex="-1" aria-hidden="true"></iframe></div>
+        <div class="meta"><h3>Wave</h3><span class="tone">Serene</span></div>
+      </a>
+      <a class="card" href="wk2/charge.html">
+        <div class="thumb" style="--tb:#050505"><iframe title="Live preview of Charge" data-src="wk2/charge.html" tabindex="-1" aria-hidden="true"></iframe></div>
+        <div class="meta"><h3>Charge</h3><span class="tone">Energetic</span></div>
+      </a>
+      <a class="card" href="wk2/fill.html">
+        <div class="thumb" style="--tb:#F3F3F5"><iframe title="Live preview of Fill" data-src="wk2/fill.html" tabindex="-1" aria-hidden="true"></iframe></div>
+        <div class="meta"><h3>Fill</h3><span class="tone">Quirky</span></div>
+      </a>
+    </div>
+
+    <p class="group">Tooltips <span>— five sets, each with a plain and a rich tooltip</span></p>
+    <div class="cards">
+      <a class="card" href="wk2/battery.html">
+        <div class="thumb" style="--tb:#F2F2F7"><iframe title="Live preview of Battery" data-src="wk2/battery.html" tabindex="-1" aria-hidden="true"></iframe></div>
+        <div class="meta"><h3>Battery</h3><span class="tone">Matter-of-fact</span></div>
+      </a>
+      <a class="card" href="wk2/pin.html">
+        <div class="thumb" style="--tb:#F2F2F7"><iframe title="Live preview of Pin" data-src="wk2/pin.html" tabindex="-1" aria-hidden="true"></iframe></div>
+        <div class="meta"><h3>Pin</h3><span class="tone">Playful</span></div>
+      </a>
+      <a class="card" href="wk2/tooltips.html">
+        <div class="thumb" style="--tb:#FFFFFF"><iframe title="Live preview of Goo Label" data-src="wk2/tooltips.html" tabindex="-1" aria-hidden="true"></iframe></div>
+        <div class="meta"><h3>Goo Label</h3><span class="tone">Playful</span></div>
+      </a>
+      <a class="card" href="wk2/scrubber-tooltips.html">
+        <div class="thumb" style="--tb:#050A10"><iframe title="Live preview of Sun Scrubber" data-src="wk2/scrubber-tooltips.html" tabindex="-1" aria-hidden="true"></iframe></div>
+        <div class="meta"><h3>Sun Scrubber</h3><span class="tone">Ethereal</span></div>
+      </a>
+      <a class="card" href="wk2/save-tooltips-clean.html">
+        <div class="thumb" style="--tb:#FBFBFB"><iframe title="Live preview of Save Dots" data-src="wk2/save-tooltips-clean.html" tabindex="-1" aria-hidden="true"></iframe></div>
+        <div class="meta"><h3>Save Dots</h3><span class="tone">Playful</span></div>
+      </a>
+    </div>
+  </section>
+
+  <p class="foot">Instructor: Dan Park</p>
 </main>
+<script>
+/* The card pictures are live previews of each page. A preview only loads while its card is on screen. */
+(function () {
+  var thumbs = document.querySelectorAll('.thumb');
+  function fit(t) { var f = t.querySelector('iframe'); if (f) f.style.transform = 'scale(' + (t.clientWidth / 1000) + ')'; }
+  thumbs.forEach(fit);
+  if ('ResizeObserver' in window) { var ro = new ResizeObserver(function (es) { es.forEach(function (e) { fit(e.target); }); }); thumbs.forEach(function (t) { ro.observe(t); }); }
+  else addEventListener('resize', function () { thumbs.forEach(fit); });
+  if (!('IntersectionObserver' in window)) { thumbs.forEach(function (t) { var f = t.querySelector('iframe'); if (f) { f.src = f.dataset.src; f.onload = function () { f.classList.add('ready'); }; } }); return; }
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      var f = e.target.querySelector('iframe'); if (!f) return;
+      if (e.isIntersecting) { if (!f.getAttribute('src')) { f.onload = function () { f.classList.add('ready'); }; f.src = f.dataset.src; } }
+      else if (f.getAttribute('src')) { f.classList.remove('ready'); f.removeAttribute('src'); }
+    });
+  }, { rootMargin: '120px' });
+  thumbs.forEach(function (t) { io.observe(t); });
+})();
+</script>
 </body>
 </html>
