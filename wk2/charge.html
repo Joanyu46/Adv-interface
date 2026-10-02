@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Badge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@900&family=Inter+Tight:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F3F1; --ink:#101010; --muted:#666; --line:rgba(16,16,16,.16);
+  --green:#5DFF2E; --green-d:#1E8F0B; --orange:#FF5B1F; --orange-d:#A82A00;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --paper:#0A0A0A; --ink:#EDEDED; --muted:#8A8A8A; --line:rgba(237,237,237,.16); } }
+:root[data-theme="dark"]{ --paper:#0A0A0A; --ink:#EDEDED; --muted:#8A8A8A; --line:rgba(237,237,237,.16); }
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%}
+body{margin:0; background:#050505; color:var(--ink); font-family:"Inter Tight", system-ui, sans-serif; display:grid; place-items:center}
+main{width:100%; height:100%}
+h1{font-family:"Big Shoulders Display", Impact, "Arial Narrow", sans-serif; font-weight:900; font-size:clamp(44px,11vw,72px); line-height:.9; margin:0 0 6px}
+.lede{color:var(--muted); margin:0 0 20px; font-size:15px; line-height:1.45; max-width:46ch}
+
+.stage{position:relative; height:100%; min-height:420px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:64px; overflow:hidden;
+  background:radial-gradient(70% 60% at 50% 55%, #1A1A1A 0%, #050505 70%); touch-action:manipulation}
+.bar{position:relative; display:flex; gap:10px; padding:10px 30px 8px; border-radius:999px;
+  background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.12); box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 20px 50px rgba(0,0,0,.6)}
+.spotclip{position:absolute; inset:0; border-radius:inherit; overflow:hidden; pointer-events:none}
+.spot{position:absolute; left:0; top:0; width:96px; height:96px; margin:-48px 0 0 -48px; border-radius:50%;
+  background-color:var(--green); filter:blur(22px); opacity:0; transition:background-color .45s ease, opacity .35s ease; will-change:transform}
+.tile{all:unset; position:relative; width:min(70px,19vw); padding:8px 0 6px; display:flex; flex-direction:column; align-items:center; gap:7px;
+  cursor:pointer; color:#E4E4E4; -webkit-tap-highlight-color:transparent; --hue:var(--green)}
+.tile:focus-visible{outline:none}
+.face{position:relative; width:60px; height:60px; display:grid; place-items:center; transition:transform .45s cubic-bezier(.3,1.5,.5,1)}
+.tile:hover .face, .tile:focus-visible .face{transform:translateY(-3px)}
+.shape{position:absolute; inset:0; width:100%; height:100%; overflow:visible}
+.shape path, .shape circle{transition:d .6s cubic-bezier(.65,0,.25,1), opacity .4s ease, stroke .4s ease, r .6s cubic-bezier(.65,0,.25,1)}
+.shape .base{stroke:rgba(255,255,255,.13); stroke-width:1}
+.shape .bloom{opacity:0}
+.shape .rim{fill:none; stroke:var(--hue); stroke-width:1.2; opacity:0}
+.shape .trace{fill:none; stroke:var(--hue); stroke-width:2.4; stroke-linecap:round; stroke-dasharray:16 84; opacity:0; filter:drop-shadow(0 0 3px var(--hue))}
+.shape .well{opacity:0; transform-box:fill-box; transform-origin:center; transition:opacity .35s ease, transform .5s cubic-bezier(.3,1.4,.5,1), r .6s cubic-bezier(.65,0,.25,1)}
+.shape .well-lip{fill:none; stroke:rgba(255,255,255,.1); stroke-width:1; opacity:0; transform-box:fill-box; transform-origin:center; transition:opacity .35s ease, transform .5s cubic-bezier(.3,1.4,.5,1), stroke .4s, r .6s cubic-bezier(.65,0,.25,1)}
+.tile[data-shape="clover"] .well, .tile[data-shape="clover"] .well-lip{opacity:1}
+.tile[data-shape="circle"] .well, .tile[data-shape="circle"] .well-lip,
+.tile[data-shape="squircle"] .well, .tile[data-shape="squircle"] .well-lip{transform:scale(.4)}
+.tile[data-shape="clover"]:hover .well, .tile[data-shape="clover"]:focus-visible .well, .tile[data-shape="clover"]:hover .well-lip, .tile[data-shape="clover"]:focus-visible .well-lip{opacity:1; transform:scale(1)}
+.tile:hover .bloom, .tile:focus-visible .bloom{opacity:1}
+.tile:hover .rim, .tile:focus-visible .rim{opacity:.45}
+.tile:hover .trace, .tile:focus-visible .trace{opacity:1; animation:trace 1.8s linear infinite}
+.tile:hover .well-lip, .tile:focus-visible .well-lip{stroke:color-mix(in srgb,var(--hue) 60%, transparent)}
+@keyframes trace{from{stroke-dashoffset:0} to{stroke-dashoffset:-100}}
+.tile svg.ic{position:relative; width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; transition:color .35s ease, filter .4s, transform .45s cubic-bezier(.3,1.4,.5,1)}
+.tile:hover svg.ic, .tile:focus-visible svg.ic{color:#1A1620; filter:none; transform:scale(1.06)}
+.tile:hover .lbl, .tile:focus-visible .lbl{color:color-mix(in srgb,var(--hue) 55%, #fff)}
+.tile:hover .halo, .tile:focus-visible .halo{filter:blur(12px)}
+.seg{display:inline-flex; gap:2px; padding:3px; border:1.5px solid var(--line); border-radius:999px; align-items:center}
+.seg span{font-size:13px; color:var(--muted); padding:0 8px 0 10px}
+.ctrls .seg button{border:none; padding:6px 12px}
+.lbl{font-size:11px; font-weight:600; color:#9A9A9A; transition:color .4s}
+
+/* badge */
+.bdg{--h:22px; --c:var(--green); --cd:var(--green-d); --tc:#0B1A04; position:absolute; left:calc(100% - 15px); top:-10px; height:var(--h); display:none; z-index:3; pointer-events:none}
+.on .bdg{display:block}
+.bdg.dot{--h:12px; left:calc(100% - 9px); top:-4px}
+
+.bdg, .bdg *{box-sizing:border-box}
+.ring{position:absolute; left:calc(var(--h) * -.36); top:calc(var(--h) * -.36); width:calc(var(--h) * 1.72); height:calc(var(--h) * 1.72); transform:rotate(-90deg); overflow:visible}
+.ring circle{fill:none; stroke:var(--c); stroke-width:2.4; stroke-linecap:round; stroke-dasharray:88; filter:drop-shadow(0 0 3px var(--c))}
+.pill{position:absolute; left:0; top:0; height:var(--h); width:var(--h); border-radius:999px; overflow:hidden; display:flex; align-items:center; justify-content:center;
+  background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.28); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px)}
+.fill{position:absolute; inset:0; border-radius:inherit; opacity:0;
+  background:linear-gradient(105deg, var(--c) 0%, var(--c2) 100%)}
+.pill::after{content:""; position:absolute; inset:1px 3px auto; height:40%; border-radius:999px; background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,0)); pointer-events:none}
+.halo{position:absolute; left:-4px; top:-4px; height:calc(var(--h) + 8px); width:calc(var(--w,var(--h)) + 8px); border-radius:999px; background:var(--c); filter:blur(9px); opacity:0}
+.sweep{position:absolute; top:-30%; bottom:-30%; width:14px; left:-20px; background:rgba(255,255,255,.85); filter:blur(5px); opacity:0; transform:skewX(-18deg)}
+.txt{position:relative; flex-shrink:0; display:inline-flex; align-items:center; padding:0 7px; font-size:12px; font-weight:700; color:var(--tc); white-space:nowrap; font-variant-numeric:tabular-nums}
+.txt svg{width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round}
+.bdg.icon .txt{padding:0}
+.old{position:absolute; left:0; top:0; bottom:0}
+
+.ctrls{display:flex; gap:8px; flex-wrap:wrap; margin-top:18px}
+.ctrls button{font:inherit; font-size:14px; font-weight:600; color:var(--ink); background:transparent; cursor:pointer; border:1.5px solid var(--line); border-radius:999px; padding:9px 16px}
+.ctrls button:focus-visible{outline:2px solid var(--ink); outline-offset:2px}
+.ctrls button[aria-pressed="true"]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+.hint{font-size:13px; color:var(--muted); margin:14px 0 0}
+</style>
+</head>
+<body>
+<main>
+  <div class="stage" id="stage">
+    <nav class="bar" aria-label="Badge without content">
+      <div class="spotclip"><div class="spot"></div></div>
+      <button class="tile" data-kind="dot" data-hue="green">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7.5l8.5 6 8.5-6"/></svg><span class="lbl">Mail</span>
+      </button>
+      <button class="tile" data-kind="dot" data-hue="orange">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M4 5.5h16v10.5H10l-5 4v-4H4z"/></svg><span class="lbl">Chat</span>
+      </button>
+      <button class="tile" data-kind="dot" data-hue="cyan">
+        <svg class="ic" viewBox="0 0 24 24"><circle cx="8" cy="9" r="2.8"/><circle cx="16" cy="9" r="2.8"/><path d="M2.8 19c.8-2.9 2.8-4.4 5.2-4.4s4.4 1.5 5.2 4.4M10.8 19c.8-2.9 2.8-4.4 5.2-4.4s4.4 1.5 5.2 4.4"/></svg><span class="lbl">Rooms</span>
+      </button>
+      <button class="tile" data-kind="dot" data-hue="violet">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="7" width="12" height="10" rx="2.5"/><path d="M15 11l6-3v8l-6-3z"/></svg><span class="lbl">Meet</span>
+      </button>
+    </nav>
+    <nav class="bar" aria-label="Badge with content">
+      <div class="spotclip"><div class="spot"></div></div>
+      <button class="tile" data-kind="count" data-text="8" data-hue="green">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7.5l8.5 6 8.5-6"/></svg><span class="lbl">Mail</span>
+      </button>
+      <button class="tile" data-kind="text" data-text="New" data-hue="orange">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M4 5.5h16v10.5H10l-5 4v-4H4z"/></svg><span class="lbl">Chat</span>
+      </button>
+      <button class="tile" data-kind="text" data-text="Live" data-hue="cyan">
+        <svg class="ic" viewBox="0 0 24 24"><circle cx="8" cy="9" r="2.8"/><circle cx="16" cy="9" r="2.8"/><path d="M2.8 19c.8-2.9 2.8-4.4 5.2-4.4s4.4 1.5 5.2 4.4M10.8 19c.8-2.9 2.8-4.4 5.2-4.4s4.4 1.5 5.2 4.4"/></svg><span class="lbl">Rooms</span>
+      </button>
+      <button class="tile" data-kind="icon" data-hue="violet">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="7" width="12" height="10" rx="2.5"/><path d="M15 11l6-3v8l-6-3z"/></svg><span class="lbl">Meet</span>
+      </button>
+    </nav>
+  </div>
+</main>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let slow = 1;
+  const T = ms => reduce ? 1 : ms * slow;
+  const C = 88, SPRING = 'cubic-bezier(.3,1.5,.5,1)', EASE = 'cubic-bezier(.22,.8,.24,1)';
+  const tiles = [...document.querySelectorAll('.tile')], mail = tiles[4];
+  const names = ['Mail','Chat','Rooms','Meet'];
+  const q = (el, s) => el.querySelector(s);
+
+  const HOVER = {
+    green:  { a:'#FFB896', b:'#FFD57A', k:'#FFC2C6' },
+    orange: { a:'#D9C6E8', b:'#C6EEF0', k:'#B4F4EE' },
+    cyan:   { a:'#6FE0CF', b:'#C9C98E', k:'#C6E59A' },
+    violet: { a:'#FFA3AE', b:'#FFD9DC', k:'#FFE4D8' }
+  };
+  const HUE = {
+    green:  { c:'#E4F45E', c2:'#9BE48F', d:'#6E8F1C', t:'#1E2608' },
+    orange: { c:'#FF9A76', c2:'#C19BFF', d:'#A8503A', t:'#2A1410' },
+    cyan:   { c:'#9BE48F', c2:'#E4F45E', d:'#2E7A4E', t:'#0E2414' },
+    violet: { c:'#C19BFF', c2:'#FF9A76', d:'#5E3FA8', t:'#1E1430' }
+  };
+  // shapes are sampled with the same point count so they can morph into each other
+  const N = 96;
+  function shape(kind){
+    const pts = [];
+    for (let i = 0; i < N; i++){
+      const a = i / N * Math.PI * 2;
+      let x, y;
+      if (kind === 'clover'){
+        const c = Math.cos(4 * (a - Math.PI/4)), r = 37.5 + 9.5 * Math.sign(c) * Math.pow(Math.abs(c), .5);
+        x = 50 + r * Math.cos(a); y = 50 + r * Math.sin(a);
+      } else if (kind === 'circle'){
+        x = 50 + 46 * Math.cos(a); y = 50 + 46 * Math.sin(a);
+      } else {
+        const n = 4.6, ca = Math.cos(a), sa = Math.sin(a);
+        x = 50 + 47 * Math.sign(ca) * Math.pow(Math.abs(ca), 2/n); y = 50 + 47 * Math.sign(sa) * Math.pow(Math.abs(sa), 2/n);
+      }
+      pts.push(x.toFixed(2) + ' ' + y.toFixed(2));
+    }
+    return 'M' + pts.join(' L') + ' Z';
+  }
+  function setShape(t, kind){
+    t.dataset.shape = kind;
+    t.querySelectorAll('.well, .well-lip').forEach(c => c.setAttribute('r', kind === 'clover' ? 22 : 28));
+    const d = shape(kind);
+    t.querySelectorAll('.shape path').forEach(p => { p.setAttribute('d', d); p.style.d = `path("${d}")`; });
+  }
+  tiles.forEach((t, i) => {
+    const h = HUE[t.dataset.hue], hv = HOVER[t.dataset.hue]; t.style.setProperty('--hue', hv.k);
+    const face = document.createElement('span'); face.className = 'face';
+    const ic = t.querySelector('svg.ic'); t.insertBefore(face, ic);
+    face.innerHTML = `<svg class="shape" viewBox="0 0 100 100" aria-hidden="true">
+      <defs>
+        <linearGradient id="gl${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity=".025"/></linearGradient>
+        <linearGradient id="bl${i}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="${hv.a}" stop-opacity="1"/><stop offset="1" stop-color="${hv.b}" stop-opacity="1"/></linearGradient>
+        <radialGradient id="wl${i}" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="#050505"/><stop offset=".8" stop-color="#121212"/><stop offset="1" stop-color="#1E1E1E"/></radialGradient>
+      </defs>
+      <path class="base" fill="url(#gl${i})"/><path class="bloom" fill="url(#bl${i})"/>
+      <circle class="well" cx="50" cy="50" r="22" fill="url(#wl${i})"/><circle class="well-lip" cx="50" cy="51" r="22"/>
+      <path class="rim"/><path class="trace" pathLength="100"/></svg>`;
+    face.appendChild(ic);
+    setShape(t, t.dataset.shape || 'circle');
+  });
+  document.querySelectorAll('.seg button').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b === btn));
+    setShape(mail, btn.dataset.shape);
+  }));
+
+  // build badges
+  tiles.forEach((t, i) => {
+    const k = t.dataset.kind, b = document.createElement('span');
+    b.className = 'bdg ' + k; const hh = HUE[t.dataset.hue];
+    b.style.cssText = `--c:${hh.c}; --c2:${hh.c2}; --cd:${hh.d}; --tc:${hh.t}`;
+    const content = k === 'dot' ? '' : k === 'icon' ? '<svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3L9.5 3.8"/></svg>' : t.dataset.text;
+    b.innerHTML = `<svg class="ring" viewBox="0 0 34 34"><circle cx="17" cy="17" r="14" stroke-dashoffset="88"/></svg>
+      <span class="halo"></span><span class="pill"><span class="fill"></span><span class="sweep"></span>${k === 'dot' ? '' : `<span class="txt">${content}</span>`}</span>`;
+    t.style.zIndex = 10 - i; t.querySelector('.face').appendChild(b); t._b = b; t._on = false; t._text = t.dataset.text || '';
+    t.addEventListener('click', () => toggle(t));
+    aria(t, i);
+  });
+  function aria(t, i = tiles.indexOf(t)){
+    const k = t.dataset.kind;
+    t.setAttribute('aria-label', t.querySelector('.lbl').textContent + (!t._on ? '' : k === 'count' ? `, ${t._text} unread` : k === 'text' ? `, ${t._text}` : k === 'dot' ? ', new activity' : ', ready to join'));
+    t.setAttribute('aria-pressed', t._on);
+  }
+  const H = b => parseFloat(getComputedStyle(b).getPropertyValue('--h'));
+  function targetW(t){
+    const b = t._b, h = H(b), txt = q(b,'.txt');
+    if (!txt || t.dataset.kind === 'icon') return h;
+    const w = Math.ceil(txt.offsetWidth) + 2; return w <= h + 4 ? h : w;
+  }
+  const parts = b => ({ pill:q(b,'.pill'), ring:q(b,'.ring circle'), fill:q(b,'.fill'), halo:q(b,'.halo'), txt:q(b,'.txt') });
+  const kill = b => b.getAnimations({ subtree:true }).forEach(a => a.cancel());
+
+  function enter(t){
+    const b = t._b, p = parts(b), k = t.dataset.kind;
+    kill(b); t.classList.add('on');
+    const h = H(b), W = targetW(t);
+    // final resting state lives in inline styles; animations only fill backwards
+    p.pill.style.width = W + 'px'; b.style.setProperty('--w', W+'px'); p.ring.style.strokeDashoffset = -C; p.ring.style.opacity = 0;
+    p.fill.style.opacity = 1; p.halo.style.opacity = .55; if (p.txt) p.txt.style.opacity = 1;
+    const o = { duration:T(k === 'dot' ? 900 : 1250), fill:'backwards' };
+    p.pill.animate([
+      { transform:'scale(0)', offset:0 }, { transform:'scale(1.12)', offset:.1, easing:'ease-out' }, { transform:'scale(1)', offset:.16 },
+      { transform:'scale(1)', offset:.48 }, { transform:'scale(1.18)', offset:.56, easing:'ease-out' }, { transform:'scale(1)', offset:.64 }, { transform:'scale(1)' }], o);
+    p.ring.animate([
+      { strokeDashoffset:C, opacity:0 }, { strokeDashoffset:C, opacity:1, offset:.1, easing:'cubic-bezier(.45,0,.3,1)' },
+      { strokeDashoffset:0, opacity:1, offset:.46 }, { strokeDashoffset:0, opacity:1, offset:.54, easing:'ease-in' },
+      { strokeDashoffset:-C, opacity:0, offset:.78 }, { strokeDashoffset:-C, opacity:0 }], o);
+    p.fill.animate([{ opacity:0 }, { opacity:0, offset:.44 }, { opacity:1, offset:.6 }, { opacity:1 }], o);
+    p.halo.animate([{ opacity:0 }, { opacity:.15, offset:.3 }, { opacity:.9, offset:.6 }, { opacity:.55 }], o);
+    if (k !== 'dot' && W > h) p.pill.animate([{ width:h+'px' }, { width:h+'px', offset:.62, easing:SPRING }, { width:W+'px' }], o);
+    if (p.txt) p.txt.animate([{ opacity:0, transform:'scale(.5)', filter:'blur(4px)' }, { opacity:0, transform:'scale(.5)', filter:'blur(4px)', offset:.64, easing:EASE },
+      { opacity:1, transform:'scale(1)', filter:'blur(0px)', offset:.9 }, { opacity:1, transform:'scale(1)', filter:'blur(0px)' }], o);
+  }
+  function exit(t){
+    const b = t._b, p = parts(b), k = t.dataset.kind, h = H(b), my = t._tok;
+    const cur = p.pill.getBoundingClientRect().width / (p.pill.getBoundingClientRect().height / h || 1);
+    kill(b);
+    const o = { duration:T(k === 'dot' ? 560 : 720), fill:'forwards' };
+    p.ring.style.strokeDashoffset = C;
+    if (p.txt) p.txt.animate([{ opacity:1, filter:'blur(0px)' }, { opacity:0, filter:'blur(4px)', offset:.25 }, { opacity:0, filter:'blur(4px)' }], o);
+    p.pill.animate([{ width:(cur || h)+'px' }, { width:h+'px', offset:.4, easing:EASE }, { width:h+'px' }], o);
+    p.fill.animate([{ opacity:1 }, { opacity:1, offset:.38 }, { opacity:0, offset:.62 }, { opacity:0 }], o);
+    p.halo.animate([{ opacity:.55 }, { opacity:0, offset:.6 }, { opacity:0 }], o);
+    p.ring.animate([{ strokeDashoffset:0, opacity:0 }, { strokeDashoffset:0, opacity:1, offset:.4, easing:'cubic-bezier(.45,0,.3,1)' },
+      { strokeDashoffset:C, opacity:1, offset:.82 }, { strokeDashoffset:C, opacity:0 }], o);
+    p.pill.animate([{ transform:'scale(1)' }, { transform:'scale(1)', offset:.8 }, { transform:'scale(1.1)', offset:.86 }, { transform:'scale(0)' }], o)
+      .finished.then(() => { if (t._tok === my && !t._on){ t.classList.remove('on'); kill(b); } }, () => {});
+  }
+  function toggle(t, force){
+    const want = force ?? !t._on; if (want === t._on) return;
+    t._on = want; t._tok = (t._tok || 0) + 1; aria(t);
+    want ? enter(t) : exit(t);
+  }
+
+  // count change: a light sweep crosses the badge while the digits swap, width springs
+  function setText(t, text){
+    const b = t._b, p = parts(b);
+    t._text = text; aria(t);
+    if (!t._on){ p.txt.textContent = text; return; }
+    const w0 = p.pill.getBoundingClientRect().width;
+    if (reduce){ p.txt.textContent = text; p.pill.style.width = targetW(t)+'px'; return; }
+    b.querySelectorAll('.old').forEach(o => o.remove());
+    const old = p.txt.cloneNode(true); old.classList.add('old'); old.style.opacity = 1; p.pill.appendChild(old);
+    p.txt.textContent = text;
+    const W = targetW(t); p.pill.style.width = W + 'px'; b.style.setProperty('--w', W+'px');
+    p.pill.animate([{ width:w0+'px' }, { width:(W + (W > w0 ? 4 : -2))+'px', offset:.7 }, { width:W+'px' }], { duration:T(560), easing:EASE });
+    old.animate([{ transform:'translateY(0)', opacity:1, filter:'blur(0px)' }, { transform:'translateY(-10px)', opacity:0, filter:'blur(3px)' }],
+      { duration:T(260), easing:'ease-in', fill:'forwards' }).finished.then(() => old.remove(), () => old.remove());
+    p.txt.animate([{ transform:'translateY(10px)', opacity:0, filter:'blur(3px)' }, { transform:'translateY(10px)', opacity:0, filter:'blur(3px)', offset:.35 },
+      { transform:'translateY(0)', opacity:1, filter:'blur(0px)' }], { duration:T(480), easing:EASE });
+    q(b,'.sweep').animate([{ left:'-20px', opacity:0 }, { opacity:.9, offset:.2 }, { left:(W + 10)+'px', opacity:0 }], { duration:T(520), easing:'cubic-bezier(.5,0,.3,1)' });
+    p.halo.animate([{ opacity:.55 }, { opacity:1, offset:.3 }, { opacity:.55 }], { duration:T(700) });
+  }
+  const fmt = n => n > 999 ? '999+' : String(n);
+  let count = 8;
+  const bump = n => { count += n; setText(mail, fmt(count)); if (!mail._on) toggle(mail, true); };
+
+  // cursor glow: lags behind the pointer and takes the color of the tile under it
+  document.querySelectorAll('.bar').forEach(bar => {
+    const spot = bar.querySelector('.spot'), pos = { x:0, y:0, tx:0, ty:0, live:false };
+    const aim = e => {
+      const r = bar.getBoundingClientRect();
+      pos.tx = e.clientX - r.left; pos.ty = e.clientY - r.top;
+      if (!pos.live){ pos.x = pos.tx; pos.y = pos.ty; }
+      pos.live = true; spot.style.opacity = .55;
+      const tile = e.target.closest && e.target.closest('.tile');
+      if (tile) spot.style.backgroundColor = HOVER[tile.dataset.hue].a;
+    };
+    bar.addEventListener('pointermove', aim); bar.addEventListener('pointerdown', aim);
+    bar.addEventListener('pointerleave', () => { pos.live = false; spot.style.opacity = 0; });
+    (function tick(){ requestAnimationFrame(tick); const k = reduce ? 1 : .1;
+      pos.x += (pos.tx - pos.x) * k; pos.y += (pos.ty - pos.y) * k; spot.style.transform = `translate(${pos.x}px, ${pos.y}px)`; })();
+  });
+
+  // start with no badges; show one of each so the motion is visible on load
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(() => {
+    setTimeout(() => toggle(tiles[2], true), reduce ? 0 : 600);
+    setTimeout(() => toggle(tiles[4], true), reduce ? 0 : 1300);
+  });
+})();
+</script>
+</body>
+</html>

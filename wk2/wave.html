@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Badge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ECECEC; --ink:#111111;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0; background:var(--bg); font-family:Geist, system-ui, sans-serif; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:70px; min-height:400px}
+body::before{content:""; position:fixed; inset:-20%; pointer-events:none; filter:blur(44px); opacity:.6;
+  background:radial-gradient(16% 20% at 34% 36%, #BDBDBD, transparent 70%), radial-gradient(15% 18% at 62% 40%, #FFFFFF, transparent 70%),
+    radial-gradient(16% 20% at 42% 66%, #CFCFCF, transparent 70%), radial-gradient(15% 18% at 68% 68%, #A9A9A9, transparent 70%)}
+.row{position:relative; display:flex; align-items:center; justify-content:center; gap:18px; height:90px}
+.item{all:unset; box-sizing:border-box; position:relative; flex:none; width:56px; height:56px; cursor:pointer; -webkit-tap-highlight-color:transparent; border-radius:28px}
+.item:focus-visible{outline:2px solid var(--ink); outline-offset:4px}
+/* the liquid layer: shapes blur together and get re-sharpened, so close shapes join with a neck */
+.goo{position:absolute; left:-24px; top:-24px; right:-24px; bottom:-24px; filter:url(#goo); pointer-events:none}
+.goo span{position:absolute; background:var(--c); border-radius:999px}
+.drop{left:0; top:0; width:0; height:0; opacity:0}
+.circ{left:24px; top:24px; width:56px; height:56px}
+.blob{left:44px; top:40px; width:24px; height:24px; opacity:0}
+.strip{transform:translateY(0)}
+.ui{position:absolute; inset:0; pointer-events:none}
+.ui > svg{position:absolute; left:16px; top:16px; width:24px; height:24px; fill:none; stroke:var(--ink); stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+.txt{position:absolute; left:62px; top:10px; height:36px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:var(--ink); white-space:nowrap; opacity:0; font-variant-numeric:tabular-nums}
+.txt svg{width:16px; height:16px; fill:var(--ink); display:block}
+.ch{display:inline-block}
+.slot{display:inline-block; width:.62em; height:1.3em; overflow:hidden; vertical-align:middle; text-align:center}
+.strip{display:block; line-height:1.3em}
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <filter id="goo" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="b"/>
+      <feColorMatrix in="b" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10" result="g"/>
+      <feColorMatrix in="g" values="1 0 0 0 .06  0 1 0 0 .06  0 0 1 0 .06  0 0 0 .8 0" result="body"/>
+      <feMorphology in="g" operator="erode" radius="1.4" result="er"/>
+      <feComposite in="g" in2="er" operator="out" result="edge"/>
+      <feColorMatrix in="edge" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .75 0" result="rim"/>
+      <feGaussianBlur in="g" stdDeviation="3" result="gb"/>
+      <feSpecularLighting in="gb" surfaceScale="5" specularConstant=".85" specularExponent="26" lighting-color="#ffffff" result="spec"><fePointLight x="10" y="-30" z="70"/></feSpecularLighting>
+      <feComposite in="spec" in2="g" operator="in" result="sheen"/>
+      <feMerge><feMergeNode in="body"/><feMergeNode in="sheen"/><feMergeNode in="rim"/></feMerge>
+    </filter>
+  </defs></svg>
+  <nav class="row" id="dots" aria-label="Badge without content"></nav>
+  <nav class="row" id="caps" aria-label="Badge with content"></nav>
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const PAL = ['#1C1C1C', '#5E5E5E', '#9C9C9C', '#D6D6D6'];
+  const INK = ['#FFFFFF', '#FFFFFF', '#111111', '#111111'];
+  const ICON = [
+    '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3.5 7.5l8.5 6 8.5-6"/>',
+    '<path d="M7.4 4.2l2 2.6c.4.6.4 1.4-.2 1.9L8 9.8a11 11 0 0 0 6.2 6.2l1.1-1.2c.5-.6 1.3-.6 1.9-.2l2.6 2c.6.5.7 1.3.2 1.9l-.9 1.2c-.6.8-1.6 1.1-2.6.9C10.3 19.4 4.6 13.7 3.4 7.5c-.2-1 .1-2 .9-2.6l1.2-.9c.6-.5 1.4-.4 1.9.2z"/>',
+    '<rect x="2.5" y="6" width="13" height="12" rx="3"/><path d="M15.5 10.5l5-3v9l-5-3"/>',
+    '<path d="M5 4.5h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7.5L7 21v-3.5H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z"/><path d="M8 10h8M8 13.5h5"/>'
+  ];
+  const NAMES = ['Email', 'Phone', 'Meeting', 'Chat'];
+  const CONTENT = [
+    { html:'3', say:'3 new' }, { html:'New', say:'new' }, { html:'24', say:'24 new' },
+    { html:'<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.4-7.5-10A4.3 4.3 0 0 1 12 7.8a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10-7.5 10z"/></svg>', say:'liked' }
+  ];
+  const richText = html => {
+    if (html.startsWith('<')) return `<span class="ch ico">${html}</span>`;
+    return [...html].map(c => /\d/.test(c)
+      ? `<span class="slot"><span class="strip">${Array.from({ length:+c + 1 }, (_, k) => k).join('<br>')}</span></span>`
+      : `<span class="ch">${c}</span>`).join('');
+  };
+  const make = (kind, i) => {
+    const b = document.createElement('button'); b.className = 'item k-' + kind; b.style.setProperty('--c', PAL[i]); b.style.setProperty('--ink', INK[i]);
+    b.innerHTML = `<span class="goo"><span class="circ"></span><span class="blob"></span><span class="drop"></span><span class="drop"></span><span class="drop"></span></span><span class="ui"><svg viewBox="0 0 24 24">${ICON[i]}</svg>` +
+      (kind === 'dot' ? '' : `<span class="txt">${richText(CONTENT[i].html)}</span>`) + '</span>';
+    b.setAttribute('aria-label', NAMES[i]); b.setAttribute('aria-pressed', 'false');
+    b._i = i; b._kind = kind; b.addEventListener('click', () => toggle(b));
+    return b;
+  };
+  const dots = document.getElementById('dots'), caps = document.getElementById('caps');
+  for (let i = 0; i < 4; i++){ dots.appendChild(make('dot', i)); caps.appendChild(make('cap', i)); }
+  const q = (el, s) => el.querySelector(s);
+  const O = 24, GAP = 6, PH = 36;
+  const P = (x, y, w, h, extra = {}) => ({ left:(x + O) + 'px', top:(y + O) + 'px', width:w + 'px', height:h + 'px', ...extra });
+
+  // with content: a drop pulls out of the circle on a liquid neck and stretches into a tag
+  function capFrames(b){
+    const t = q(b,'.txt'), W = Math.max(PH, Math.ceil(t.scrollWidth) + 26), X = 56 + GAP, Y = (56 - PH) / 2;
+    t.style.width = W + 'px';
+    return {
+      D:950,
+      item:[{ width:'56px', easing:'cubic-bezier(.6,0,.2,1)' }, { offset:.4, width:(X + 30) + 'px', easing:'cubic-bezier(.3,1.25,.5,1)' }, { offset:.78, width:(X + W + 4) + 'px' }, { width:(X + W) + 'px' }],
+      blob:[
+        { ...P(26, 16, 24, 24, { opacity:1 }), easing:'cubic-bezier(.4,0,.6,1)' },
+        { offset:.14, ...P(38, 0, 24, 30, { opacity:1 }), easing:'cubic-bezier(.2,.6,.4,1)' },
+        { offset:.28, ...P(52, -24, 28, 28, { opacity:1 }), easing:'cubic-bezier(.6,0,.8,.4)' },
+        { offset:.42, ...P(X + 4, Y + 6, 26, 20, { opacity:1 }), easing:'cubic-bezier(.3,1.3,.5,1)' },
+        { offset:.5, ...P(X, Y + 3, 28, PH - 6, { opacity:1 }), easing:'cubic-bezier(.3,1.25,.5,1)' },
+        { offset:.72, ...P(X, Y - 1, W + 4, PH + 2, { opacity:1 }), easing:'ease-in-out' },
+        { offset:.82, ...P(X + 2, Y + 3, W - 4, PH - 6, { opacity:1 }), easing:'ease-in-out' },
+        { offset:.9, ...P(X - 1, Y - 3, W + 2, PH + 6, { opacity:1 }), easing:'ease-in-out' },
+        { offset:.96, ...P(X, Y + 1, W, PH - 2, { opacity:1 }) },
+        { ...P(X, Y, W, PH, { opacity:1 }) }],
+      drops:[[-10, -22, 9], [10, -26, 7], [24, -6, 6]].map(([dx, dy, s], k) => {
+        const sx = X + W - 14, sy = Y + 6, st = .74 + k * .03;
+        return [
+          { ...P(sx, sy, 0, 0, { opacity:0 }) }, { offset:st, ...P(sx, sy, s, s, { opacity:1 }), easing:'cubic-bezier(.2,.7,.3,1)' },
+          { offset:Math.min(.97, st + .14), ...P(sx + dx, sy + dy, s * .7, s * .7, { opacity:1 }), easing:'cubic-bezier(.5,0,.9,.5)' },
+          { ...P(sx + dx * 1.2, sy + dy + 10, 0, 0, { opacity:0 }) }];
+      }),
+      circ:[{ transform:'scale(1)' }, { offset:.1, transform:'scale(1.06,.92)' }, { offset:.22, transform:'scale(.96,1.05)' }, { offset:.36, transform:'scale(1)' }, { offset:.46, transform:'scale(1.04,.97)' }, { transform:'scale(1)' }],
+      txt:[{ opacity:0 }, { offset:.58, opacity:0 }, { offset:.66, opacity:1 }, { opacity:1 }],
+      parts:[...t.querySelectorAll('.ch, .strip')].map((el, k) => {
+        const st = .62 + k * .05;
+        if (el.classList.contains('strip')){
+          const d = el.textContent.length - 1, lh = el.getBoundingClientRect().height / (d + 1 || 1);
+          return [el, [{ transform:'translateY(0)', filter:'blur(0px)' }, { offset:st, transform:'translateY(0)', filter:'blur(2px)', easing:'cubic-bezier(.5,0,.3,1)' },
+            { offset:Math.min(.92, st + .22), transform:`translateY(${-(d * lh) - 5}px)`, filter:'blur(1px)', easing:'cubic-bezier(.3,1.6,.5,1)' }, { transform:`translateY(${-(d * lh)}px)`, filter:'blur(0px)' }]];
+        }
+        if (el.classList.contains('ico'))
+          return [el, [{ transform:'scale(0) rotate(-90deg)' }, { offset:st, transform:'scale(0) rotate(-90deg)', easing:'cubic-bezier(.3,1.7,.5,1)' }, { offset:Math.min(.94, st + .2), transform:'scale(1.35) rotate(12deg)' }, { transform:'scale(1) rotate(0)' }]];
+        return [el, [{ transform:'translateY(14px) scaleY(1.3)', filter:'blur(4px)', opacity:0 }, { offset:st, transform:'translateY(14px) scaleY(1.3)', filter:'blur(4px)', opacity:0, easing:'cubic-bezier(.2,.8,.3,1.2)' },
+          { offset:Math.min(.94, st + .2), transform:'translateY(-2px) scaleY(1)', filter:'blur(0px)', opacity:1 }, { transform:'translateY(0) scaleY(1)', filter:'blur(0px)', opacity:1 }]];
+      })
+    };
+  }
+  // without content: a little drop buds off the circle, stretches, and pinches free into a dot
+  function dotFrames(){
+    return {
+      D:850,
+      blob:[
+        { ...P(28, 10, 16, 16, { opacity:1 }), easing:'cubic-bezier(.4,0,.6,1)' },
+        { offset:.2, ...P(34, -6, 18, 24, { opacity:1 }), easing:'cubic-bezier(.2,.6,.4,1)' },
+        { offset:.42, ...P(42, -30, 22, 22, { opacity:1 }), easing:'cubic-bezier(.6,0,.8,.4)' },
+        { offset:.62, ...P(48, -6, 18, 13, { opacity:1 }), easing:'cubic-bezier(.3,1.5,.5,1)' },
+        { offset:.8, ...P(48, -10, 15, 17, { opacity:1 }) },
+        { ...P(48, -8, 16, 16, { opacity:1 }) }],
+      circ:[{ transform:'scale(1)' }, { offset:.35, transform:'scale(1.05,.95)' }, { offset:.6, transform:'scale(.98,1.02)' }, { transform:'scale(1)' }]
+    };
+  }
+  function toggle(b, force){
+    const on = force ?? !b.classList.contains('on');
+    if (on === b.classList.contains('on')) return;
+    b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+    b.setAttribute('aria-label', NAMES[b._i] + (on ? (b._kind === 'dot' ? ', new activity' : ', ' + CONTENT[b._i].say) : ''));
+    const running = b._anims && b._anims.length && b._anims[0].playState === 'running';
+    if (running){ b._anims.forEach(a => a.reverse()); return; }
+    (b._anims || []).forEach(a => a.cancel());
+    const f = b._kind === 'dot' ? dotFrames() : capFrames(b), o = { duration:reduce ? 1 : f.D, fill:'both' };
+    b._anims = [q(b,'.blob').animate(f.blob, o), q(b,'.circ').animate(f.circ, o)];
+    if (f.item) b._anims.push(b.animate(f.item, o));
+    if (f.txt) b._anims.push(q(b,'.txt').animate(f.txt, o));
+    if (f.drops){ const ds = b.querySelectorAll('.drop'); f.drops.forEach((k, j) => b._anims.push(ds[j].animate(k, o))); }
+    if (f.parts) f.parts.forEach(([el, k]) => b._anims.push(el.animate(k, o)));
+    b._anims.forEach(a => { a.persist(); if (!on){ a.playbackRate = -1.2; } });
+  }
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(() => {
+    setTimeout(() => toggle(dots.children[2], true), 600);
+    setTimeout(() => toggle(caps.children[1], true), 1200);
+  });
+})();
+</script>
+</body>
+</html>

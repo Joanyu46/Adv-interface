@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Badge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@900&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FCFCFC; --ink:#111214; --muted:#6B6E78; --line:rgba(17,18,20,.14); --on-fill:#14161A;
+  --panel:#F3F3F5; --blob-o:.55; --glass:rgba(255,255,255,.5); --glass-edge:rgba(255,255,255,.75); --glass-hi:rgba(255,255,255,.95); --hover:rgba(17,18,20,.05); --dot-ring:rgba(255,255,255,.9); --tint:.5; --chip:rgba(255,255,255,.55);
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --paper:#111113; --ink:#EEEEF0; --muted:#9A9CA6; --line:rgba(238,238,240,.16); --on-fill:#FFFFFF; --panel:#18181C; --blob-o:.35; --glass:rgba(40,40,48,.45); --glass-edge:rgba(255,255,255,.12); --glass-hi:rgba(255,255,255,.18); --hover:rgba(255,255,255,.07); --dot-ring:rgba(30,30,36,.9); --tint:.38; --chip:rgba(255,255,255,.16); } }
+:root[data-theme="dark"]{ --paper:#111113; --ink:#EEEEF0; --muted:#9A9CA6; --line:rgba(238,238,240,.16); --on-fill:#FFFFFF; --panel:#18181C; --blob-o:.35; --glass:rgba(40,40,48,.45); --glass-edge:rgba(255,255,255,.12); --glass-hi:rgba(255,255,255,.18); --hover:rgba(255,255,255,.07); --dot-ring:rgba(30,30,36,.9); --tint:.38; --chip:rgba(255,255,255,.16); }
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%}
+body{margin:0; background:var(--panel); color:var(--ink); font-family:Geist, system-ui, sans-serif; display:grid; place-items:center}
+main{width:100%; height:100%}
+h1{font-family:"Big Shoulders Display", Impact, "Arial Narrow", sans-serif; font-weight:900; font-size:clamp(44px,11vw,72px); line-height:.9; margin:0 0 6px}
+.lede{color:var(--muted); margin:0 0 24px; font-size:15px; line-height:1.45; max-width:46ch}
+
+.stage{position:relative; height:100%; min-height:320px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:64px; overflow:hidden; background:var(--panel)}
+.stage::before{content:""; position:absolute; inset:-30%; filter:blur(34px); opacity:var(--blob-o);
+  background:radial-gradient(22% 30% at 30% 45%, #D9F25A, transparent 70%), radial-gradient(20% 28% at 52% 62%, #FF9A76, transparent 70%),
+    radial-gradient(22% 30% at 70% 40%, #B79CFF, transparent 70%), radial-gradient(18% 22% at 45% 30%, #8FE3B0, transparent 70%);
+  animation:float 14s ease-in-out infinite alternate}
+@keyframes float{to{transform:translate(4%,-3%) rotate(8deg)}}
+.bar{--H:66px; position:relative; height:var(--H); display:flex; align-items:center; gap:4px; padding:0 8px; border-radius:999px; overflow:hidden; isolation:isolate;
+  background:var(--glass); backdrop-filter:blur(18px) saturate(1.6); -webkit-backdrop-filter:blur(18px) saturate(1.6);
+  box-shadow:inset 0 0 0 1px var(--glass-edge), inset 0 1px 0 var(--glass-hi), 0 8px 24px rgba(30,20,40,.12)}
+.item{all:unset; position:relative; width:70px; height:52px; border-radius:999px; display:grid; place-items:center; cursor:pointer; color:var(--ink); -webkit-tap-highlight-color:transparent; transition:background-color .25s}
+.item:hover{background-color:var(--hover)}
+.item:focus-visible{outline:1.5px solid var(--ink); outline-offset:-2px}
+.item svg{width:26px; height:26px; fill:currentColor}
+.dot{position:absolute; left:calc(50% + 8px); top:7px; width:9px; height:9px; border-radius:50%; background:linear-gradient(135deg,#B9E83A,#FF8A65); box-shadow:0 0 0 2px var(--dot-ring); transform:scale(0)}
+.has-dot .dot{transform:scale(1)}
+
+.fill{position:absolute; left:0; top:0; width:0; height:0; border-radius:999px; pointer-events:none; z-index:2; display:none; overflow:hidden;
+  background:linear-gradient(100deg, rgba(222,244,90,var(--tint)) 0%, rgba(150,228,150,var(--tint)) 26%, rgba(255,150,112,var(--tint)) 58%, rgba(190,152,255,var(--tint)) 82%, rgba(222,244,90,var(--tint)) 100%);
+  background-size:250% 100%; animation:drift 7s linear infinite;
+  backdrop-filter:blur(12px) saturate(1.9); -webkit-backdrop-filter:blur(12px) saturate(1.9);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.6), inset 0 1px 1px rgba(255,255,255,.95), inset 0 -2px 6px rgba(255,255,255,.25)}
+.fill::after{content:""; position:absolute; left:8%; right:8%; top:1px; height:42%; border-radius:999px; background:linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,0))}
+@keyframes drift{to{background-position:250% 0}}
+.open .fill, .busy .fill{display:block}
+
+.content{all:unset; position:absolute; inset:0; z-index:3; display:none; align-items:center; gap:10px; padding:0 8px 0 22px; cursor:pointer; color:var(--on-fill); border-radius:999px}
+.content:focus-visible{outline:1.5px solid var(--on-fill); outline-offset:-3px}
+.open .content, .busy .content{display:flex}
+.c-ic{width:26px; height:26px; display:grid; place-items:center; flex-shrink:0}
+.c-ic svg{width:26px; height:26px; fill:currentColor}
+.c-lbl{font-size:20px; font-weight:600; letter-spacing:-.005em; white-space:nowrap}
+.c-badge{box-sizing:border-box; margin-left:auto; height:42px; min-width:68px; padding:0 15px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; gap:5px;
+  background:var(--chip); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.75), inset 0 1px 0 rgba(255,255,255,1), 0 2px 8px rgba(60,30,40,.1);
+  font-size:18px; font-weight:650; white-space:nowrap; overflow:hidden; position:relative; font-variant-numeric:tabular-nums}
+.c-badge svg{width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round}
+.live{width:9px; height:9px; border-radius:50%; background:#1FA34A; box-shadow:0 0 0 0 rgba(31,163,74,.5); animation:ping 1.4s ease-out infinite}
+@keyframes ping{to{box-shadow:0 0 0 9px rgba(31,163,74,0)}}
+.num{display:inline-block}
+.num.old{position:absolute}
+
+.ctrls{display:flex; gap:8px; flex-wrap:wrap; justify-content:center}
+.ctrls button{font:inherit; font-size:14px; font-weight:600; color:var(--ink); background:transparent; cursor:pointer; border:1.5px solid var(--line); border-radius:999px; padding:9px 16px}
+.ctrls button:focus-visible{outline:2px solid var(--ink); outline-offset:2px}
+.ctrls button[aria-pressed="true"]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+.hint{font-size:13px; color:var(--muted); margin:16px 0 0; text-align:center}
+@media (prefers-reduced-motion: reduce){ .fill, .stage::before, .live{animation:none} }
+</style>
+</head>
+<body>
+<main>
+  <div class="stage">
+    <nav class="bar" id="dotbar" aria-label="Animation 1: badge without content">
+      <button class="item" data-k="mail" aria-pressed="false" aria-label="Mail">
+        <svg viewBox="0 0 24 24"><path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm0 2.4v.3l8 5.2 8-5.2v-.3H4z"/></svg><span class="dot"></span>
+      </button>
+      <button class="item" data-k="chat" aria-pressed="false" aria-label="Chat">
+        <svg viewBox="0 0 24 24"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg><span class="dot"></span>
+      </button>
+      <button class="item" data-k="rooms" aria-pressed="false" aria-label="Rooms">
+        <svg viewBox="0 0 24 24"><circle cx="8" cy="8.5" r="3.2"/><circle cx="16.5" cy="8.5" r="3.2"/><path d="M1.8 19.5c.6-3.6 3.1-5.6 6.2-5.6s5.6 2 6.2 5.6zM14.6 19.5c-.2-2-.9-3.6-2-4.7.9-.6 2.4-.9 3.9-.9 3.1 0 5.4 2 5.9 5.6z"/></svg><span class="dot"></span>
+      </button>
+      <button class="item" data-k="meet" aria-pressed="false" aria-label="Meet">
+        <svg viewBox="0 0 24 24"><path d="M4 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm13 4.2 5-2.7v9l-5-2.7z"/></svg><span class="dot"></span>
+      </button>
+    </nav>
+    <nav class="bar" id="bar" aria-label="Animation 2: badge with content">
+      <button class="item" data-k="mail" aria-expanded="false" aria-label="Mail">
+        <svg viewBox="0 0 24 24"><path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm0 2.4v.3l8 5.2 8-5.2v-.3H4z"/></svg><span class="dot"></span>
+      </button>
+      <button class="item" data-k="chat" aria-expanded="false" aria-label="Chat">
+        <svg viewBox="0 0 24 24"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg><span class="dot"></span>
+      </button>
+      <button class="item" data-k="rooms" aria-expanded="false" aria-label="Rooms">
+        <svg viewBox="0 0 24 24"><circle cx="8" cy="8.5" r="3.2"/><circle cx="16.5" cy="8.5" r="3.2"/><path d="M1.8 19.5c.6-3.6 3.1-5.6 6.2-5.6s5.6 2 6.2 5.6zM14.6 19.5c-.2-2-.9-3.6-2-4.7.9-.6 2.4-.9 3.9-.9 3.1 0 5.4 2 5.9 5.6z"/></svg><span class="dot"></span>
+      </button>
+      <button class="item" data-k="meet" aria-expanded="false" aria-label="Meet">
+        <svg viewBox="0 0 24 24"><path d="M4 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm13 4.2 5-2.7v9l-5-2.7z"/></svg><span class="dot"></span>
+      </button>
+      <div class="fill" id="fill"></div>
+      <button class="content" id="content" aria-label="Close">
+        <span class="c-ic" id="cic"></span>
+        <span><span class="c-lbl" id="clbl"></span></span>
+        <span class="c-badge" id="cbadge"></span>
+      </button>
+    </nav>
+  </div>
+</main>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let slow = 1, mail = 8, openItem = null, anims = [], closing = false;
+  const bar = document.getElementById('bar'), fill = document.getElementById('fill'), content = document.getElementById('content');
+  const cic = document.getElementById('cic'), clbl = document.getElementById('clbl'), cbadge = document.getElementById('cbadge');
+  const items = [...bar.querySelectorAll('.item')];
+  const fmt = n => n > 999 ? '999+' : String(n);
+  const DATA = {
+    mail:  () => ({ label:'Mail',  badge:`<span class="num">${fmt(mail)}</span>`, aria:`${fmt(mail)} unread` }),
+    chat:  () => ({ label:'Chat',  badge:'<span class="num">New</span>', aria:'new message' }),
+    rooms: () => ({ label:'Rooms', badge:'<span class="live"></span><span class="num">Live</span>', aria:'live now' }),
+    meet:  () => ({ label:'Meet',  badge:'<svg viewBox="0 0 12 12"><path d="M3.5 8.5l5-5M4.5 3.5h4v4"/></svg><span class="num">Join</span>', aria:'ready to join' })
+  };
+  const D = () => reduce ? 1 : 820 * slow;
+  // sample a cubic-bezier so other timings can follow the same curve
+  function bez([x1,y1,x2,y2]){
+    const pts = [];
+    for (let i = 0; i <= 200; i++){ const t = i/200, u = 1-t;
+      pts.push([3*u*u*t*x1 + 3*u*t*t*x2 + t*t*t, 3*u*u*t*y1 + 3*u*t*t*y2 + t*t*t]); }
+    // returns the time at which progress reaches f
+    return f => { f = Math.max(0, Math.min(1, f)); const p = pts.find(q => q[1] >= f) || pts[200]; return p[0]; };
+  }
+
+  function geometry(item){
+    const br = bar.getBoundingClientRect(), r = item.getBoundingClientRect(), H = br.height;
+    const cx = r.left - br.left + r.width/2, cy = H/2;
+    const dot = item.querySelector('.dot'), hasDot = item.classList.contains('has-dot');
+    const dr = dot.getBoundingClientRect();
+    return { W:br.width, H, cx, cy, hasDot,
+      dx: dr.left - br.left + dr.width/2, dy: dr.top - br.top + dr.height/2, ds: dr.width };
+  }
+
+  function build(item){
+    const g = geometry(item), d = DATA[item.dataset.k](), dur = D();
+    cic.innerHTML = item.querySelector('svg').outerHTML;
+    clbl.textContent = d.label; cbadge.innerHTML = d.badge;
+    content.setAttribute('aria-label', `Close ${d.label}, ${d.aria}`);
+    const o = { duration:dur, fill:'both' }, list = [];
+    // one curve drives the spread, the icon's travel and the hand-off timing, so nothing runs ahead of the color
+    const EASE_X = [.3, .1, .1, 1], SPAN = .82, ez = `cubic-bezier(${EASE_X.join(',')})`;
+    const prog = bez(EASE_X);
+    const x0 = g.hasDot ? (g.dx + g.cx)/2 - g.ds/2 : g.cx, w0 = g.hasDot ? g.ds : 0;
+    const y0 = g.hasDot ? g.dy - g.ds/2 : g.cy, h0 = g.hasDot ? g.ds : 0;
+    list.push(fill.animate([
+      { left:x0+'px', width:w0+'px', easing:ez },
+      { offset:SPAN, left:'0px', width:g.W+'px' },
+      { left:'0px', width:g.W+'px' }], o));
+    list.push(fill.animate([
+      { top:y0+'px', height:h0+'px', easing:'cubic-bezier(.2,.9,.3,1)' },
+      { offset:.42, top:'0px', height:g.H+'px' },
+      { top:'0px', height:g.H+'px' }], o));
+    // icons hand off exactly when the color's edge reaches them
+    const br = bar.getBoundingClientRect(), right0 = x0 + w0;
+    items.forEach(it => {
+      const r = it.getBoundingClientRect(), xl = r.left - br.left + 6, xr = r.right - br.left - 6;
+      let at;
+      if (it === item) at = 0;
+      else if (xr < x0) at = SPAN * prog((x0 - xr) / x0);
+      else at = SPAN * prog((xl - right0) / (g.W - right0));
+      at = Math.max(0, Math.min(.9, at));
+      const end = it === item ? .015 : Math.min(.98, at + .1);
+      list.push(it.animate([
+        { opacity:1, transform:'scale(1)', filter:'blur(0px)' },
+        { offset:at, opacity:1, transform:'scale(1)', filter:'blur(0px)' },
+        { offset:end, opacity:0, transform: it === item ? 'scale(1)' : 'scale(.7)', filter: it === item ? 'blur(0px)' : 'blur(2px)' },
+        { opacity:0, transform:'scale(.7)', filter:'blur(2px)' }], o));
+    });
+    const slotX = 22 + 13;
+    list.push(cic.animate([
+      { opacity:1, transform:`translateX(${g.cx - slotX}px)`, easing:ez },
+      { offset:SPAN, opacity:1, transform:'translateX(0)' },
+      { opacity:1, transform:'translateX(0)' }], o));
+    list.push(clbl.animate([
+      { opacity:0, transform:'translateX(-6px)', filter:'blur(4px)', clipPath:'inset(0 100% 0 0)' },
+      { offset:.38, opacity:0, transform:'translateX(-6px)', filter:'blur(4px)', clipPath:'inset(0 100% 0 0)', easing:'cubic-bezier(.22,.8,.24,1)' },
+      { offset:.82, opacity:1, transform:'translateX(0)', filter:'blur(0px)', clipPath:'inset(0 0% 0 0)' },
+      { opacity:1, transform:'translateX(0)', filter:'blur(0px)', clipPath:'inset(0 0% 0 0)' }], o));
+    list.push(cbadge.animate([
+      { opacity:0, transform:'scale(.4)' }, { offset:.58, opacity:0, transform:'scale(.4)', easing:'cubic-bezier(.3,1.4,.5,1)' },
+      { offset:.9, opacity:1, transform:'scale(1.04)' }, { opacity:1, transform:'scale(1)' }], o));
+    [...cbadge.children].forEach((c, j) => list.push(c.animate([
+      { opacity:0, transform:'translateY(8px)' }, { offset:.64 + j*.04, opacity:0, transform:'translateY(12px)', easing:'cubic-bezier(.22,.8,.24,1)' },
+      { opacity:1, transform:'translateY(0)' }], o)));
+    list.forEach(a => a.persist());
+    return list;
+  }
+
+  function open(item){
+    if (openItem) return;
+    anims.forEach(a => a.cancel());
+    openItem = item; closing = false;
+    bar.classList.add('busy');
+    anims = build(item);
+    anims.forEach(a => a.playbackRate = 1);
+    anims[0].finished.then(() => { if (openItem === item && !closing){ bar.classList.add('open'); content.focus({ preventScroll:true }); } }, () => {});
+    items.forEach(it => it.setAttribute('aria-expanded', it === item));
+  }
+  function close(){
+    if (!openItem || closing) return;
+    const item = openItem; closing = true; bar.classList.remove('open');
+    anims.forEach(a => { a.playbackRate = -1.25 / 1; a.play(); });
+    anims[0].finished.then(() => {
+      if (!closing) return;
+      anims.forEach(a => a.cancel()); anims = [];
+      bar.classList.remove('busy'); openItem = null; closing = false;
+      items.forEach(it => it.setAttribute('aria-expanded', 'false'));
+      item.focus({ preventScroll:true });
+    }, () => {});
+  }
+  // tapping while it's still filling turns it around from where it is
+  // animation 1: no badge <-> badge without content (top bar)
+  const dotItems = [...document.querySelectorAll('#dotbar .item')];
+  function toggleDot(it, force){
+    const d = it.querySelector('.dot'), on = force ?? !it.classList.contains('has-dot');
+    if (on === it.classList.contains('has-dot')) return;
+    it.classList.toggle('has-dot', on);
+    it.setAttribute('aria-pressed', on);
+    if (reduce) return;
+    d.getAnimations().forEach(a => a.cancel());
+    d.animate(on
+      ? [{ transform:'scale(0)' }, { offset:.55, transform:'scale(1.45)' }, { offset:.8, transform:'scale(.9)' }, { transform:'scale(1)' }]
+      : [{ transform:'scale(1)' }, { offset:.35, transform:'scale(1.25)' }, { transform:'scale(0)' }],
+      { duration:(on ? 480 : 300) * slow, easing:on ? 'cubic-bezier(.3,1.4,.5,1)' : 'cubic-bezier(.5,0,.75,0)' });
+  }
+  dotItems.forEach(it => it.addEventListener('click', () => toggleDot(it)));
+  setTimeout(() => toggleDot(dotItems[2], true), 700);
+  // animation 2: no badge <-> badge with content (bottom bar)
+  items.forEach(it => it.addEventListener('click', () => open(it)));
+  content.addEventListener('click', () => {
+    if (closing && openItem){ closing = false; anims.forEach(a => { a.playbackRate = 1; a.play(); });
+      anims[0].finished.then(() => { if (!closing && openItem) bar.classList.add('open'); }, () => {}); return; }
+    close();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+  function setMail(n){
+    mail = n;
+    if (!openItem || openItem.dataset.k !== 'mail') return;
+    const cur = cbadge.querySelector('.num:not(.old)'); if (!cur) return;
+    const w0 = cbadge.getBoundingClientRect().width;
+    cbadge.querySelectorAll('.old').forEach(o => o.remove());
+    const old = cur.cloneNode(true); old.classList.add('old'); cbadge.appendChild(old);
+    cur.textContent = fmt(n);
+    content.setAttribute('aria-label', `Close Mail, ${fmt(n)} unread`);
+    if (reduce){ old.remove(); return; }
+    const w1 = cbadge.getBoundingClientRect().width, s = slow;
+    old.animate([{ transform:'translateY(0)', opacity:1, filter:'blur(0px)' }, { transform:'translateY(-16px)', opacity:0, filter:'blur(3px)' }],
+      { duration:240*s, easing:'ease-in', fill:'forwards' }).finished.then(() => old.remove(), () => old.remove());
+    cur.animate([{ transform:'translateY(16px) scale(.7)', opacity:0 }, { offset:.3, transform:'translateY(16px) scale(.7)', opacity:0 },
+      { offset:.75, transform:'translateY(-2px) scale(1.06)', opacity:1 }, { transform:'translateY(0) scale(1)', opacity:1 }], { duration:520*s, easing:'cubic-bezier(.22,.8,.24,1)' });
+    cbadge.animate([{ width:w0+'px' }, { offset:.7, width:(w1 + 5)+'px' }, { width:w1+'px' }], { duration:520*s, easing:'cubic-bezier(.22,.8,.24,1)' });
+    fill.animate([{ filter:'brightness(1)' }, { filter:'brightness(1.12) saturate(1.2)' }, { filter:'brightness(1)' }], { duration:600*s });
+  }
+})();
+</script>
+</body>
+</html>

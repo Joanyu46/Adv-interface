@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Scrubber tooltips</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --tone: 111, 195, 255;
+    --tone-l: 190, 226, 255;
+    --b: 62, 240, 200;
+    --gx: 50%;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100%; background: #050a10; color: #e9eef4;
+    padding: 32px 16px 40px; display: grid; justify-items: center; gap: 36px;
+    font-family: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .demo { width: 100%; max-width: 760px; }
+  .cap { margin: 10px 0 0; text-align: center; font-size: 13px; color: #7a8896; }
+  .hint { margin: 0; font-size: 13px; color: #7a8896; text-align: center; }
+
+  .card {
+    position: relative; width: 100%; padding-top: 14px; overflow: hidden;
+    border-radius: 28px; border: 1px solid rgba(255, 255, 255, .07);
+    background: linear-gradient(180deg, #0e1923 0%, #09111a 100%);
+  }
+  /* the light comes from the handle, in both colours of the time of day */
+  .light {
+    position: absolute; z-index: 0; pointer-events: none; width: 420px; height: 170px;
+    left: calc(var(--gx) - 210px); top: calc(var(--ty, 120px) - 85px);
+    background: radial-gradient(closest-side, rgba(var(--tone), .30), rgba(var(--b), .13) 58%, transparent 100%);
+  }
+  .rings { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; overflow: visible; }
+
+  /* every shape in the liquid layer melts into one */
+  .liquid { position: absolute; left: 0; top: 0; width: 100%; z-index: 1; pointer-events: none;
+    filter: url(#goo) drop-shadow(0 10px 18px rgba(var(--tone), .22)); }
+  .g { position: absolute; left: 0; top: 0; width: 0; height: 0; border-radius: 50%; will-change: left, top, width, height; }
+
+  .tipzone { height: var(--tip-h); }
+
+  /* ---------- tooltip content (the shape behind it is in the liquid layer) ---------- */
+  .pill {
+    position: absolute; left: 0; top: 0; z-index: 2; display: flex; align-items: center; justify-content: center;
+    white-space: nowrap; pointer-events: none; transform-origin: 50% 50%;
+    font-weight: 800; font-variant-numeric: tabular-nums;
+    opacity: 0; visibility: hidden; will-change: transform, opacity;
+  }
+  .pill.plain { width: 72px; height: 32px; font-size: 14px; letter-spacing: .01em; }
+  .pill.rich {
+    width: 236px; height: 128px; padding: 14px 16px; flex-direction: column; align-items: flex-start; justify-content: flex-start;
+    white-space: normal; text-align: left;
+  }
+  .row { display: flex; align-items: baseline; gap: 8px; width: 100%; }
+  .rich .time { font-size: 20px; line-height: 22px; letter-spacing: .005em; }
+  .name { font-size: 12px; line-height: 16px; font-weight: 700; opacity: .72; }
+  .desc { margin: 6px 0 0; height: 34px; overflow: hidden; font-size: 12.5px; line-height: 17px; font-weight: 500; opacity: .82; }
+  .act {
+    margin-top: 10px; height: 28px; padding: 0 12px; border: 0; border-radius: 999px; cursor: pointer;
+    font: 700 12px/1 "Manrope", system-ui, sans-serif; color: inherit;
+    background: rgba(var(--ink-rgb, 6, 18, 28), .14);
+  }
+  .act:hover { background: rgba(var(--ink-rgb, 6, 18, 28), .24); }
+  .act:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+  .swap { animation: swap .22s ease-out; }
+  @keyframes swap { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .name.swap { animation-name: swapName; }
+  @keyframes swapName { from { opacity: 0; transform: translateY(4px); } to { opacity: .72; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .swap { animation: none; } }
+
+  /* ---------- the track ---------- */
+  .track { position: relative; z-index: 3; height: 64px; touch-action: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .ticks { position: absolute; left: 28px; right: 28px; top: 0; bottom: 0; pointer-events: none; }
+  .tick { position: absolute; width: 2px; border-radius: 1px; background: rgba(255, 255, 255, .16); }
+  .thumb {
+    position: absolute; left: 0; top: 10px; width: 28px; height: 44px; margin: 0; padding: 0; border: 0;
+    background: transparent; display: grid; place-items: center; cursor: grab; touch-action: none; will-change: transform;
+  }
+  .thumb:active { cursor: grabbing; }
+  .glass {
+    width: 20px; height: 38px; border-radius: 11px;
+    background: linear-gradient(160deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, .05));
+    border: 1px solid rgba(255, 255, 255, .4);
+    box-shadow: inset 0 0 10px rgba(var(--tone), .5), 0 0 18px rgba(var(--tone), .45);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    transition: transform .3s cubic-bezier(.3, 1.5, .5, 1);
+  }
+  .thumb.on .glass { transform: scale(1.12, 1.06); }
+  .thumb:focus { outline: none; }
+  .thumb:focus-visible .glass { outline: 2px solid #fff; outline-offset: 3px; }
+
+  .chip {
+    position: relative; z-index: 3; margin: 2px auto 22px; width: max-content; padding: 7px 14px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; color: rgb(var(--tone-l));
+    background: rgba(var(--tone), .14); border: 1px solid rgba(var(--tone), .3);
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="goo" x="-5%" y="-25%" width="110%" height="150%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
+      <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10"/>
+    </filter>
+  </defs>
+</svg>
+
+<section class="demo" data-kind="plain">
+  <div class="card" style="--tip-h: 84px">
+    <div class="light"></div>
+    <div class="liquid" aria-hidden="true"></div>
+    <div class="tipzone" aria-hidden="true"></div>
+    <div class="track">
+      <div class="ticks"></div>
+      <button class="thumb" type="button" role="slider" aria-label="Time of day" aria-orientation="horizontal"
+              aria-valuemin="0" aria-valuemax="1439" aria-valuenow="1079" aria-valuetext="17:59">
+        <span class="glass"></span>
+      </button>
+    </div>
+    <div class="pill plain" aria-hidden="true"><span class="time">17:59</span></div>
+    <div class="chip">Eastern Time</div>
+    <svg class="rings" aria-hidden="true"></svg>
+  </div>
+  <p class="cap">Plain tooltip</p>
+</section>
+
+<section class="demo" data-kind="rich">
+  <div class="card" style="--tip-h: 176px">
+    <div class="light"></div>
+    <div class="liquid" aria-hidden="true"></div>
+    <div class="tipzone" aria-hidden="true"></div>
+    <div class="track">
+      <div class="ticks"></div>
+      <button class="thumb" type="button" role="slider" aria-label="Time of day" aria-orientation="horizontal"
+              aria-valuemin="0" aria-valuemax="1439" aria-valuenow="1079" aria-valuetext="Golden hour, 17:59">
+        <span class="glass"></span>
+      </button>
+    </div>
+    <div class="pill rich" role="group" aria-label="Time details">
+      <div class="row"><span class="time">17:59</span><span class="name">Golden hour</span></div>
+      <p class="desc">Low, warm light for the next hour.</p>
+      <button class="act" type="button" aria-pressed="false">Remind me</button>
+    </div>
+    <div class="chip">Eastern Time</div>
+    <svg class="rings" aria-hidden="true"></svg>
+  </div>
+  <p class="cap">Rich tooltip</p>
+</section>
+
+<p class="hint">Drag the handle, tap the track, or use the arrow keys.</p>
+
+<script>
+(function () {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  var PAD = 28, CY = 32, DROP_R = 6, TETHER_N = 9, DETENT = 4, START = 1079;
+  var EVENTS = [382, 418, 784, 1154, 1192];            // moments the handle clicks into (rich tooltip)
+  // what the rich tooltip says, from this minute of the day onward
+  var PHASES = [
+    [0,    'Night',          'Quiet hours. The sky is at its darkest.'],
+    [300,  'Early dawn',     'First light is on its way.'],
+    [382,  'Civil twilight', 'Bright enough to see without lights.'],
+    [418,  'Sunrise',        'The sun crosses the horizon.'],
+    [470,  'Morning',        'Light is soft and still rising.'],
+    [700,  'Midday',         'The sun is at its highest point.'],
+    [900,  'Afternoon',      'Warm light, with long shadows ahead.'],
+    [1020, 'Golden hour',    'Low, warm light for the next hour.'],
+    [1154, 'Sunset',         'The sun slips below the horizon.'],
+    [1192, 'Dusk',           'The last colour leaves the sky.'],
+    [1250, 'Evening',        'Blue hour fades slowly into night.']
+  ];
+  // two colours for every time of day: the gradient runs from the first to the second
+  var STOPS_A = [
+    [0, [89, 97, 255]], [300, [96, 102, 255]], [382, [164, 123, 255]], [418, [255, 179, 92]], [540, [124, 200, 255]],
+    [780, [111, 195, 255]], [1020, [124, 200, 255]], [1154, [255, 179, 92]], [1200, [164, 123, 255]],
+    [1290, [91, 99, 255]], [1440, [89, 97, 255]]
+  ];
+  var STOPS_B = [
+    [0, [53, 214, 255]], [300, [86, 170, 255]], [382, [255, 111, 160]], [418, [255, 112, 112]], [540, [62, 240, 200]],
+    [780, [62, 240, 200]], [1020, [62, 240, 200]], [1154, [255, 100, 140]], [1200, [255, 120, 190]],
+    [1290, [53, 214, 255]], [1440, [53, 214, 255]]
+  ];
+
+  function clamp(n, a, b) { a = a === undefined ? 0 : a; b = b === undefined ? 1 : b; return Math.min(b, Math.max(a, n)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function sstep(a, b, n) { var t = clamp((n - a) / (b - a)); return t * t * (3 - 2 * t); }
+  function colorAt(stops, m) {
+    for (var i = 0; i < stops.length - 1; i++) {
+      var a = stops[i], b = stops[i + 1];
+      if (m <= b[0]) { var t = sstep(a[0], b[0], m); return [0, 1, 2].map(function (k) { return Math.round(lerp(a[1][k], b[1][k], t)); }); }
+    }
+    return stops[stops.length - 1][1];
+  }
+  function mix(a, b, t) { return [0, 1, 2].map(function (k) { return Math.round(lerp(a[k], b[k], t)); }); }
+  function rgb(c) { return 'rgb(' + c.join(',') + ')'; }
+  function lum(c) {
+    var l = c.map(function (v) { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); });
+    return .2126 * l[0] + .7152 * l[1] + .0722 * l[2];
+  }
+  function inkOn(c) {                          // dark or white text, whichever reads better on this colour
+    var L = lum(c), dark = (L + .05) / (lum([6, 18, 28]) + .05), light = 1.05 / (L + .05);
+    return dark >= light ? '#06121c' : '#ffffff';
+  }
+  function fmt(m) { m = Math.round(m); var h = Math.floor(m / 60), mm = m % 60; return (h < 10 ? '0' : '') + h + ':' + (mm < 10 ? '0' : '') + mm; }
+  function phaseAt(m) { var p = PHASES[0]; for (var i = 0; i < PHASES.length; i++) if (m >= PHASES[i][0]) p = PHASES[i]; return p; }
+
+  function Spring(x, k, c) { this.x = x; this.t = x; this.v = 0; this.k = k; this.c = c; }
+  Spring.prototype.step = function (dt) {
+    if (reduce.matches) { this.x = this.t; this.v = 0; return; }
+    var n = Math.max(1, Math.ceil(dt / .004)), h = dt / n;
+    for (var i = 0; i < n; i++) { this.v += (this.k * (this.t - this.x) - this.c * this.v) * h; this.x += this.v * h; }
+  };
+  Spring.prototype.settled = function () { return Math.abs(this.v) < .01 && Math.abs(this.t - this.x) < .002; };
+
+  var CONFIG = {
+    plain: { pw: 72,  ph: 32,  radius: 16, rich: false, detent: false, delay: 800 },
+    rich:  { pw: 236, ph: 128, radius: 22, rich: true,  detent: true,  delay: 1500 }
+  };
+
+  function createScrubber(root, cfg) {
+    var $ = function (s) { return root.querySelector(s); };
+    var card = $('.card'), liquid = $('.liquid'), tipzone = $('.tipzone'), track = $('.track'), ticksEl = $('.ticks'),
+        thumb = $('.thumb'), pill = $('.pill'), ringsSvg = $('.rings'), timeEl = $('.time'),
+        nameEl = $('.name'), descEl = $('.desc'), act = $('.act');
+
+    var N = 0, MAXV = 1439, val = START, dragging = false, hover = false, hoverTip = false, focusVis = false, focusTip = false, autoShow = false;
+    var dragOff = 0, hideT = 0, autoT = 0, raf = 0, last = 0;
+    var cardW = 760, trackW = 704, HY = 100, CYF = 38, curPhase = null, reminder = false;
+    var auto = { running: false, t0: 0, from: START, to: 1154, dur: 2600 };
+    var burst = { on: false, t0: 0 };
+    var show = new Spring(0, 170, 17), pillX = new Spring(0, 280, 25), dock = new Spring(0, 200, 20), drop = new Spring(0, 300, 22);
+    var tickEls = [], tickX = [], tickM = [], tickBase = [];
+
+    function mk() { var d = document.createElement('div'); d.className = 'g'; liquid.appendChild(d); return d; }
+    var blob = mk(), dropA = mk(), tether = [];
+    for (var q = 0; q < TETHER_N; q++) tether.push(mk());
+    var NSVG = 'http://www.w3.org/2000/svg', ringEls = [];
+    for (var r = 0; r < 6; r++) {
+      var rc = document.createElementNS(NSVG, 'circle');
+      rc.setAttribute('fill', 'none'); rc.setAttribute('stroke', '#fff'); rc.setAttribute('stroke-width', '1');
+      rc.style.display = 'none'; ringsSvg.appendChild(rc); ringEls.push(rc);
+    }
+
+    function buildTicks(n) {
+      ticksEl.innerHTML = ''; tickEls = []; tickM = []; tickBase = []; N = n;
+      var major = (n - 1) / 8;                                  // a taller tick every three hours
+      for (var i = 0; i < n; i++) {
+        var el = document.createElement('div'); el.className = 'tick'; ticksEl.appendChild(el);
+        tickEls.push(el); tickM.push(i / (n - 1) * 1440); tickBase.push(i % major === 0 ? 17 : 12);
+      }
+    }
+    function layout() {
+      cardW = card.clientWidth; trackW = cardW - PAD * 2;
+      var want = Math.max(4, Math.round(trackW / 7 / 8)) * 8 + 1;
+      if (want !== N) buildTicks(want);
+      card.style.setProperty('--ty', (track.offsetTop + CY) + 'px');
+      for (var i = 0; i < N; i++) {
+        tickX[i] = PAD + (i / (N - 1)) * trackW;
+        tickEls[i].style.left = (tickX[i] - PAD - 1) + 'px';
+      }
+      CYF = tipzone.offsetTop + 8 + cfg.ph / 2;           // centre of the tooltip when fully open
+      HY = track.offsetTop + 13 - 4;                      // the drop that sits just above the handle
+      liquid.style.height = (track.offsetTop + 28) + 'px';
+      kick();
+    }
+    function valToX(v) { return PAD + (v / 1440) * trackW; }
+
+    function circ(el, cx, cy, r, color) {
+      if (r < .2) { el.style.display = 'none'; return; }
+      el.style.display = '';
+      el.style.left = (cx - r) + 'px'; el.style.top = (cy - r) + 'px';
+      el.style.width = el.style.height = (r * 2) + 'px'; el.style.borderRadius = '50%';
+      el.style.background = color;
+    }
+    function slab(el, l, cy, w, h, rad, grad, gl, gw) {
+      if (w < .5 || h < .5) { el.style.display = 'none'; return; }
+      el.style.display = '';
+      el.style.left = l + 'px'; el.style.top = (cy - h / 2) + 'px';
+      el.style.width = w + 'px'; el.style.height = h + 'px'; el.style.borderRadius = rad + 'px';
+      el.style.backgroundImage = grad; el.style.backgroundColor = 'transparent';
+      el.style.backgroundSize = gw + 'px 100%'; el.style.backgroundPosition = (gl - l) + 'px 0'; el.style.backgroundRepeat = 'no-repeat';
+    }
+
+    function render(now) {
+      var x = valToX(val), A = colorAt(STOPS_A, val), B = colorAt(STOPS_B, val);
+      var light = A.map(function (c) { return Math.round(c + (255 - c) * .38); });
+      card.style.setProperty('--tone', A.join(', '));
+      card.style.setProperty('--tone-l', light.join(', '));
+      card.style.setProperty('--b', B.join(', '));
+      card.style.setProperty('--gx', x + 'px');
+      thumb.style.transform = 'translate3d(' + (x - 14) + 'px,0,0)';
+      timeEl.textContent = fmt(val);
+
+      if (cfg.rich) {
+        var ph = phaseAt(val);
+        if (ph !== curPhase) {
+          curPhase = ph; nameEl.textContent = ph[1]; descEl.textContent = ph[2];
+          [nameEl, descEl].forEach(function (e) { e.classList.remove('swap'); void e.offsetWidth; e.classList.add('swap'); });
+        }
+      }
+
+      var ink = inkOn(mix(A, B, .5));
+      pill.style.color = ink;
+      pill.style.setProperty('--ink-rgb', ink === '#ffffff' ? '255,255,255' : '6,18,28');
+
+      // the tooltip follows the handle with its own lag
+      var pw = cfg.pw, ph2 = cfg.ph, tgt = clamp(x - pw / 2, 10, cardW - 10 - pw);
+      if (show.x < .03 && show.t === 1) { pillX.x = tgt; pillX.v = 0; }
+      pillX.t = tgt;
+      var s = clamp(show.x, 0, 1.12);
+      var cxp = pillX.x + pw / 2, cyp = lerp(HY, CYF, s);
+
+      pill.style.transform = 'translate3d(' + pillX.x + 'px,' + (cyp - ph2 / 2) + 'px,0) scale(' + Math.max(s, .001) + ')';
+      pill.style.opacity = clamp((s - .5) / .4);
+      pill.style.visibility = s < .02 ? 'hidden' : 'visible';
+      pill.style.pointerEvents = (cfg.rich && s > .9) ? 'auto' : 'none';
+
+      // liquid: the tooltip body grows out of the handle, with the shared gradient across it
+      var grad = 'linear-gradient(100deg,' + rgb(A) + ' 0%,' + rgb(B) + ' 100%)';
+      var gw = pw * s, gl = cxp - gw / 2;
+      slab(blob, gl, cyp, gw, ph2 * s, Math.min(ph2 / 2, cfg.radius) * s, grad, gl, gw);
+
+      var colorAtX = function (px) { return rgb(mix(A, B, clamp((px - gl) / Math.max(gw, 1)))); };
+      circ(dropA, x, HY, DROP_R * drop.x, colorAtX(x));
+
+      // the neck between the handle's drop and the tooltip: it thins as the tooltip lags or gets pinned to an edge
+      var lag = Math.abs(x - cxp), neckR = lerp(4.4, 1.6, clamp(lag / 120)) * clamp(s * 1.4);
+      var half = Math.max(pw / 2 - 16, 0) * s;
+      var ex = clamp(x, cxp - half, cxp + half), ey = cyp + (ph2 / 2 - 6) * s;
+      for (var k = 0; k < TETHER_N; k++) {
+        var t = k / (TETHER_N - 1), u1 = 1 - t;
+        var px = u1 * u1 * ex + 2 * u1 * t * x + t * t * x, py = u1 * u1 * ey + 2 * u1 * t * ((HY + ey) / 2) + t * t * HY;
+        var rr = lerp(neckR + .6, DROP_R * .9, Math.pow(t, 2)) * clamp(s * 1.4) * (s > .02 ? 1 : 0);
+        circ(tether[k], px, py, rr, colorAtX(px));
+      }
+
+      // the flower: six thin circles open out around the handle, turn, and fold back into one
+      if (burst.on) {
+        var u = (now - burst.t0) / 800;
+        if (u >= 1) { burst.on = false; ringEls.forEach(function (c) { c.style.display = 'none'; }); }
+        else {
+          var fy = track.offsetTop + CY, fw = Math.sin(Math.PI * u), fd = 12 * fw, fr = u * 2.4, fo = Math.pow(fw, .7) * .85;
+          ringEls.forEach(function (c, n) {
+            var a = (n / ringEls.length) * Math.PI * 2 + fr;
+            c.style.display = '';
+            c.setAttribute('cx', x + Math.cos(a) * fd); c.setAttribute('cy', fy + Math.sin(a) * fd);
+            c.setAttribute('r', 15 + 3 * fw); c.setAttribute('stroke-opacity', fo);
+          });
+        }
+      }
+
+      // ticks: each one wears the colours of its own time of day, and swell around the handle
+      var dk = clamp(dock.x, 0, 1.15);
+      for (var i = 0; i < N; i++) {
+        var d = tickX[i] - x, g = Math.exp(-(d * d) / 512);
+        var h = tickBase[i] + 22 * g * dk, filled = tickM[i] <= val, e = tickEls[i];
+        e.style.height = h + 'px'; e.style.top = (CY - h / 2) + 'px';
+        if (filled) {
+          var c = mix(colorAt(STOPS_A, tickM[i]), colorAt(STOPS_B, tickM[i]), .4);
+          e.style.background = 'rgba(' + c.join(',') + ',' + (.6 + .4 * g * dk) + ')';
+        } else e.style.background = 'rgba(255,255,255,' + (.14 + .2 * g * dk) + ')';
+      }
+      thumb.classList.toggle('on', dragging);
+    }
+
+    function frame(now) {
+      var dt = Math.min(.032, (now - last) / 1000); last = now;
+      if (auto.running) {
+        var p = clamp((now - auto.t0) / auto.dur);
+        var e = p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+        setVal(lerp(auto.from, auto.to, e));
+        if (p >= 1) { auto.running = false; autoT = setTimeout(function () { autoShow = false; updateActive(); }, 1600); }
+      }
+      drop.t = (show.t === 1 || burst.on) ? 1 : 0;
+      show.step(dt); pillX.step(dt); dock.step(dt); drop.step(dt);
+      render(now);
+      var more = auto.running || burst.on || dragging || !show.settled() || !pillX.settled() || !dock.settled() || !drop.settled();
+      raf = more ? requestAnimationFrame(frame) : 0;
+    }
+    function kick() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } }
+
+    function setVal(v) {
+      v = clamp(v, 0, MAXV);
+      if (v === val) return;
+      val = v;
+      thumb.setAttribute('aria-valuenow', Math.round(val));
+      thumb.setAttribute('aria-valuetext', cfg.rich ? phaseAt(val)[1] + ', ' + fmt(val) : fmt(val));
+    }
+    function snap(v) {
+      if (!cfg.detent) return v;
+      for (var i = 0; i < EVENTS.length; i++) if (Math.abs(v - EVENTS[i]) <= DETENT) return EVENTS[i];
+      return v;
+    }
+    function active() { return dragging || hover || hoverTip || focusVis || focusTip || autoShow; }
+    function updateActive() {
+      clearTimeout(hideT);
+      if (active()) { show.t = 1; dock.t = 1; }
+      else hideT = setTimeout(function () { if (!active()) { show.t = 0; dock.t = 0; kick(); } }, 450);
+      kick();
+    }
+    function startBurst() { if (reduce.matches) return; burst.on = true; burst.t0 = performance.now(); kick(); }
+    function cancelAuto() { auto.running = false; autoShow = false; clearTimeout(autoT); }
+
+    function setFromX(clientX) {
+      var rect = track.getBoundingClientRect();
+      var v = ((clientX - rect.left - dragOff) - PAD) / trackW * 1440;
+      setVal(snap(clamp(v, 0, MAXV)));
+      kick();
+    }
+    track.addEventListener('pointerdown', function (e) {
+      cancelAuto(); dragging = true;
+      try { track.setPointerCapture(e.pointerId); } catch (err) {}
+      if (thumb.contains(e.target)) { var tr = thumb.getBoundingClientRect(); dragOff = e.clientX - (tr.left + tr.width / 2); }
+      else { dragOff = 0; setFromX(e.clientX); }
+      startBurst(); updateActive();
+      thumb.focus({ preventScroll: true });
+    });
+    track.addEventListener('pointermove', function (e) { if (dragging) setFromX(e.clientX); });
+    function endDrag() { if (dragging) { dragging = false; updateActive(); } }
+    track.addEventListener('pointerup', endDrag);
+    track.addEventListener('pointercancel', endDrag);
+
+    thumb.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') { cancelAuto(); hover = true; updateActive(); } });
+    thumb.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') { hover = false; updateActive(); } });
+    thumb.addEventListener('focus', function () { if (thumb.matches(':focus-visible')) { cancelAuto(); focusVis = true; startBurst(); updateActive(); } });
+    thumb.addEventListener('blur', function () { focusVis = false; updateActive(); });
+    thumb.addEventListener('keydown', function (e) {
+      var step = e.shiftKey ? 60 : 10, v = null;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') v = val - step;
+      else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') v = val + step;
+      else if (e.key === 'PageDown') v = val - 60;
+      else if (e.key === 'PageUp') v = val + 60;
+      else if (e.key === 'Home') v = 0;
+      else if (e.key === 'End') v = MAXV;
+      if (v === null) return;
+      e.preventDefault(); cancelAuto(); focusVis = true; setVal(snap(v)); updateActive();
+    });
+
+    if (cfg.rich) {            // the rich tooltip stays open while you use it
+      pill.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') { cancelAuto(); hoverTip = true; updateActive(); } });
+      pill.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') { hoverTip = false; updateActive(); } });
+      pill.addEventListener('focusin', function () { focusTip = true; updateActive(); });
+      pill.addEventListener('focusout', function (e) { if (!pill.contains(e.relatedTarget)) { focusTip = false; updateActive(); } });
+      act.addEventListener('click', function () {
+        reminder = !reminder;
+        act.textContent = reminder ? 'Set for ' + fmt(val) : 'Remind me';
+        act.setAttribute('aria-pressed', reminder ? 'true' : 'false');
+      });
+    }
+
+    window.addEventListener('resize', layout);
+    if ('ResizeObserver' in window) new ResizeObserver(layout).observe(card);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+    layout();
+    render(performance.now());
+
+    // intro: the handle glides to the sunset so the colour change is visible
+    setTimeout(function () {
+      if (dragging || hover || focusVis) return;
+      autoShow = true; updateActive(); startBurst();
+      auto.from = val; auto.to = 1154; auto.t0 = performance.now() + 450; auto.running = true; kick();
+    }, cfg.delay);
+  }
+
+  document.querySelectorAll('.demo').forEach(function (root) {
+    createScrubber(root, CONFIG[root.getAttribute('data-kind')]);
+  });
+})();
+</script>
+</body>
+</html>

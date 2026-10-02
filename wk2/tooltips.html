@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Tooltips</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #151515;
+    --muted: #6b6b6b;
+    --blob: #151515;
+    --on-blob: #ffffff;
+    --on-blob-muted: rgba(255, 255, 255, .7);
+    --focus: #151515;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #000000; --ink: #f5f5f5; --muted: #9a9a9a; --blob: #f5f5f5; --on-blob: #151515; --on-blob-muted: rgba(21, 21, 21, .66); --focus: #f5f5f5; }
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100%; background: var(--bg); color: var(--ink);
+    padding: max(32px, env(safe-area-inset-top, 0px)) 16px max(32px, env(safe-area-inset-bottom, 0px));
+    font-family: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .grid { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px 20px; justify-items: center; }
+  .demo { width: 100%; max-width: 460px; }
+  .cap { margin: 8px 0 0; text-align: center; font-size: 13px; color: var(--muted); }
+
+  .stage { position: relative; width: 100%; height: var(--h); }
+  /* shapes inside .goo are merged into one liquid blob by the SVG filter */
+  .goo { position: absolute; inset: 0; z-index: 1; filter: url(#goo); pointer-events: none; overflow: hidden; }
+  .g { position: absolute; left: 0; top: 0; background: var(--blob); will-change: left, top, width, height; }
+
+  .anchor { position: absolute; left: var(--ax); top: var(--ay); width: 36px; height: 36px; margin-left: -18px; z-index: 3; }
+  .label {
+    position: absolute; right: calc(100% + 10px); top: 0; height: 36px; display: flex; align-items: center;
+    white-space: nowrap; font-size: 15px; font-weight: 500; color: var(--ink);
+  }
+  .icon {
+    position: absolute; inset: 0; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%;
+    background: transparent; color: var(--on-blob); cursor: pointer; display: grid; place-items: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .icon:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+  .icon svg { width: 18px; height: 18px; overflow: visible; }
+
+  .content { position: absolute; z-index: 2; color: var(--on-blob); pointer-events: none; visibility: hidden; }
+  .content.live { pointer-events: auto; }
+  .content > * { will-change: transform, opacity, filter; }
+  .t, .c { white-space: nowrap; }
+
+  /* plain tooltip */
+  .plain .stage { --h: 230px; --ax: 74%; --ay: 62%; }
+  .plain .t { margin: 0; padding: 12px 16px; font-size: 13px; line-height: 18px; font-weight: 500; }
+
+  /* rich tooltip */
+  .rich .stage { --h: 350px; --ax: 70%; --ay: 74%; }
+  .rich .content { padding: 16px 18px 12px; }
+  .rich .t { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; letter-spacing: -.005em; }
+  .rich .c { margin: 6px 0 0; font-size: 13px; line-height: 18px; color: var(--on-blob-muted); }
+  .act {
+    display: block; height: 30px; margin: 8px 0 0 -8px; padding: 0 8px; border: 0; border-radius: 8px;
+    background: transparent; cursor: pointer; font: 600 13.5px/30px "Figtree", system-ui, sans-serif; color: var(--on-blob);
+  }
+  .act:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .act:focus-visible { outline: 2px solid var(--on-blob); outline-offset: 1px; }
+
+  @media (max-width: 420px) { .label { font-size: 14px; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="goo" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4.5" result="b"/>
+      <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"/>
+    </filter>
+  </defs>
+</svg>
+
+<main class="grid">
+
+  <section class="demo plain" data-kind="plain">
+    <div class="stage">
+      <div class="goo" aria-hidden="true">
+        <div class="g rect"></div><div class="g bridge"></div><div class="g dotA"></div><div class="g dotB"></div>
+      </div>
+      <div class="anchor">
+        <span class="label">Demand for this event</span>
+        <div class="content" id="tip-plain" role="tooltip">
+          <p class="t">This event is in the top 10% of events<br>in San Francisco Giants when ranked<br>based on the rate of unique visitors<br>to the event over the past day</p>
+        </div>
+        <button class="icon" type="button" aria-label="About demand for this event" aria-expanded="false" aria-describedby="tip-plain">
+          <svg class="glyph" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="10" cy="5.4" r="1.7"/><rect x="8.5" y="8.6" width="3" height="7.2" rx="1.5"/></svg>
+        </button>
+      </div>
+    </div>
+    <p class="cap">Plain tooltip</p>
+  </section>
+
+  <section class="demo rich" data-kind="rich">
+    <div class="stage">
+      <div class="goo" aria-hidden="true">
+        <div class="g rect"></div><div class="g bridge"></div><div class="g dotA"></div><div class="g dotB"></div>
+      </div>
+      <div class="anchor">
+        <span class="label">Demand for this event</span>
+        <div class="content" id="tip-rich" role="group" aria-label="Demand for this event">
+          <p class="t">Demand for this event</p>
+          <p class="c">This event is in the top 10% of events<br>in San Francisco Giants when ranked<br>based on the rate of unique visitors<br>to the event over the past day</p>
+          <button class="act" type="button">Learn more</button>
+        </div>
+        <button class="icon" type="button" aria-label="About demand for this event" aria-expanded="false" aria-controls="tip-rich">
+          <svg class="glyph" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="10" cy="5.4" r="1.7"/><rect x="8.5" y="8.6" width="3" height="7.2" rx="1.5"/></svg>
+        </button>
+      </div>
+    </div>
+    <p class="cap">Rich tooltip</p>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  /* ---------- shared settings ---------- */
+  var SPRING = { k: 30, c: 10 };            // slow motion. Faster: { k: 150, c: 12.5 }
+  var SPLIT = { near: 8, far: 15, r: 10 };  // how far the two drops travel, and their size
+  var AUTOPLAY = true;                      // play once on load; false = wait for hover
+
+  var CONFIG = {
+    plain: { gap: 14, radius: 8,  width: 290, droplets: false, delay: 600 },
+    rich:  { gap: 16, radius: 20, width: 300, droplets: true,  delay: 900 }
+  };
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function clamp(n, a, b) { a = a === undefined ? 0 : a; b = b === undefined ? 1 : b; return Math.min(b, Math.max(a, n)); }
+  function sstep(a, b, n) { var t = clamp((n - a) / (b - a)); return t * t * (3 - 2 * t); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  var SPECS = [
+    { nx: .06, ny: -.05, r: 8 }, { nx: .5, ny: -.12, r: 9 }, { nx: .94, ny: -.05, r: 7 },
+    { nx: -.05, ny: .55, r: 8 }, { nx: 1.05, ny: .5, r: 9 }, { nx: .22, ny: 1.08, r: 7 }
+  ];
+
+  function createTooltip(root, cfg) {
+    var $ = function (s) { return root.querySelector(s); };
+    var stage = $('.stage'), goo = $('.goo'), anchor = $('.anchor'), icon = $('.icon'), glyph = $('.glyph'),
+        content = $('.content'), rect = $('.rect'), bridge = $('.bridge'), dotA = $('.dotA'), dotB = $('.dotB');
+    var items = Array.prototype.slice.call(content.children);
+
+    var S = 36, IC = S / 2, W = cfg.width, H = 96, off = 0, ax = 0, ay = 0;
+    var x = 0, v = 0, target = 0, raf = 0, last = 0, pinned = false, timer = 0;
+
+    var drops = (cfg.droplets ? SPECS : []).map(function (s, i) {
+      var el = document.createElement('div');
+      el.className = 'g'; el.style.borderRadius = '50%';
+      goo.appendChild(el);
+      return { el: el, s: s, delay: i * .018, ox: 0, oy: 0, ix: 0, iy: 0 };
+    });
+
+    function layout() {
+      var sr = stage.getBoundingClientRect(), ar = anchor.getBoundingClientRect();
+      W = Math.min(cfg.width, sr.width - 16);
+      content.style.width = W + 'px';
+      H = content.offsetHeight;
+      ax = ar.left - sr.left; ay = ar.top - sr.top;
+      var leftV = ar.left + S / 2 - W / 2;
+      leftV = Math.max(sr.left + 8, Math.min(sr.right - 8 - W, leftV));
+      off = leftV - ar.left;
+      content.style.left = off + 'px';
+      content.style.top = (-(cfg.gap + H)) + 'px';
+      drops.forEach(function (d) {
+        var T = -(cfg.gap + H);
+        d.ox = off + d.s.nx * W; d.oy = T + d.s.ny * H;
+        d.ix = off + clamp(d.s.nx, .05, .95) * W; d.iy = T + clamp(d.s.ny, .08, .92) * H;
+      });
+      apply(x);
+    }
+
+    function circle(el, cx, cy, r) {
+      el.style.left = (ax + cx - r) + 'px'; el.style.top = (ay + cy - r) + 'px';
+      el.style.width = el.style.height = (r * 2) + 'px'; el.style.borderRadius = '50%';
+    }
+
+    function apply(p) {
+      var rm = reduce.matches, pc = clamp(p), os = Math.max(0, p - 1);
+      var fx = off, fy = -(cfg.gap + H);
+
+      if (rm) {                             // reduced motion: simple fade
+        goo.style.filter = 'none';
+        circle(dotA, IC, IC, 18); dotB.style.display = 'none'; bridge.style.display = 'none';
+        rect.style.display = pc > .01 ? '' : 'none';
+        rect.style.left = (ax + fx) + 'px'; rect.style.top = (ay + fy) + 'px';
+        rect.style.width = W + 'px'; rect.style.height = H + 'px'; rect.style.borderRadius = cfg.radius + 'px';
+        rect.style.opacity = pc;
+        drops.forEach(function (d) { d.el.style.display = 'none'; });
+        items.forEach(function (el) { el.style.opacity = pc; el.style.transform = 'none'; el.style.filter = 'none'; });
+        glyph.style.opacity = 1;
+        content.classList.toggle('live', pc > .9 && target === 1);
+        content.style.visibility = pc > .01 ? 'visible' : 'hidden';
+        return;
+      }
+      goo.style.filter = '';
+
+      // 1) the icon stretches, narrows in the middle, and splits into two drops
+      var shrink = sstep(0, .14, pc), neck = sstep(.14, .3, pc);
+      var spread = (SPLIT.near * shrink + (SPLIT.far - SPLIT.near) * neck) * (1 - sstep(.3, .47, pc));
+      var gone = 1 - sstep(.46, .6, pc);
+      var r = lerp(18, SPLIT.r, shrink);
+      var rA = Math.max(r * gone, 18 * sstep(.78, .98, pc));      // icon re-forms at the end
+      var rB = rA * gone * sstep(0, .04, pc);
+      var hb = 2 * r * (1 - neck) * gone;
+      circle(dotA, IC - spread, IC, rA);
+      circle(dotB, IC + spread, IC, rB);
+      dotB.style.display = rB < .2 ? 'none' : '';
+      var showBridge = hb > .6 && spread > .6;
+      bridge.style.display = showBridge ? '' : 'none';
+      if (showBridge) {
+        bridge.style.left = (ax + IC - spread) + 'px'; bridge.style.top = (ay + IC - hb / 2) + 'px';
+        bridge.style.width = (spread * 2) + 'px'; bridge.style.height = hb + 'px'; bridge.style.borderRadius = '0';
+      }
+
+      // 2) the drops merge into a pill, which swells into the tooltip
+      var u1 = sstep(.34, .52, pc);
+      var cw = lerp(15, 66, u1), ch = 15;
+      var eT = sstep(.5, .88, pc) + os * 1.4, eS = sstep(.54, .93, pc) + os, eB = sstep(.58, .97, pc) + os * .9;
+      var L = lerp(IC - cw / 2, fx, eS), Rr = lerp(IC + cw / 2, fx + W, eS);
+      var T = lerp(IC - ch / 2, fy, eT), B = lerp(IC + ch / 2, fy + H, eB);
+      var rw = Rr - L, rh = B - T;
+      rect.style.display = pc < .34 ? 'none' : '';
+      rect.style.left = (ax + L) + 'px'; rect.style.top = (ay + T) + 'px';
+      rect.style.width = Math.max(rw, 0) + 'px'; rect.style.height = Math.max(rh, 0) + 'px';
+      rect.style.borderRadius = Math.min(Math.min(rw, rh) / 2, lerp(7.5, cfg.radius, sstep(.5, .95, pc))) + 'px';
+      rect.style.opacity = 1;
+
+      // 3) droplets peek past the edge, then fall back in
+      drops.forEach(function (d) {
+        var out = sstep(.5 + d.delay, .78 + d.delay, pc), back = sstep(.78 + d.delay, .96 + d.delay, pc);
+        var tx = lerp(d.ix, d.ox, .4), ty = lerp(d.iy, d.oy, .4);
+        var px = lerp(lerp(IC, tx, out), d.ix, back), py = lerp(lerp(IC, ty, out), d.iy, back);
+        var rr = d.s.r * sstep(.48, .56, pc) * (1 - sstep(.86 + d.delay, 1, pc));
+        d.el.style.display = rr < .3 ? 'none' : '';
+        circle(d.el, px, py, rr);
+      });
+
+      glyph.style.opacity = clamp((1 - sstep(0, .1, pc)) + sstep(.9, 1, pc));
+      for (var i = 0; i < items.length; i++) {
+        var raw = clamp((p - (.74 + i * .07)) / .26, 0, 1.2), t = clamp(raw), el = items[i];
+        el.style.opacity = t;
+        el.style.transform = 'translateY(' + ((1 - raw) * 6) + 'px)';
+        el.style.filter = t < 1 ? 'blur(' + ((1 - t) * 4) + 'px)' : 'none';
+      }
+      content.style.visibility = pc > .7 || target === 1 ? 'visible' : 'hidden';
+      content.classList.toggle('live', pc > .9 && target === 1);
+    }
+
+    function tick(now) {
+      var dt = Math.min(.032, (now - last) / 1000); last = now;
+      var closing = target === 0;
+      var k = SPRING.k * (closing ? 1.4 : 1), c = SPRING.c * (closing ? 1.2 : 1);
+      var n = Math.max(1, Math.ceil(dt / .004)), h = dt / n;
+      for (var i = 0; i < n; i++) { v += (k * (target - x) - c * v) * h; x += v * h; }
+      if (Math.abs(v) < .002 && Math.abs(target - x) < .001) { x = target; v = 0; raf = 0; apply(x); return; }
+      apply(x);
+      raf = requestAnimationFrame(tick);
+    }
+    function go(t) {
+      target = t;
+      icon.setAttribute('aria-expanded', t ? 'true' : 'false');
+      if (reduce.matches) { x = t; v = 0; apply(x); return; }
+      if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick); }
+    }
+    function open() { clearTimeout(timer); go(1); }
+
+    // hover, focus, tap to pin, Esc to close
+    anchor.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') open(); });
+    anchor.addEventListener('pointerleave', function (e) {
+      if (e.pointerType !== 'mouse') return;
+      clearTimeout(timer);
+      timer = setTimeout(function () { if (!pinned) go(0); }, 180);
+    });
+    icon.addEventListener('click', function () {
+      clearTimeout(timer);
+      if (target === 1 && pinned) { pinned = false; go(0); } else { pinned = true; go(1); }
+    });
+    icon.addEventListener('focus', function () { if (icon.matches(':focus-visible')) open(); });
+    anchor.addEventListener('focusout', function (e) { if (!anchor.contains(e.relatedTarget)) { pinned = false; go(0); } });
+    document.addEventListener('pointerdown', function (e) { if (!anchor.contains(e.target)) { pinned = false; clearTimeout(timer); go(0); } });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && target === 1) { pinned = false; go(0); icon.focus(); } });
+
+    window.addEventListener('resize', layout);
+    if ('ResizeObserver' in window) new ResizeObserver(layout).observe(content);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+    layout();
+
+    if (AUTOPLAY) {
+      setTimeout(function () {
+        go(1);
+        timer = setTimeout(function () { if (!pinned) go(0); }, 3800);
+      }, cfg.delay);
+    }
+  }
+
+  document.querySelectorAll('.demo').forEach(function (root) {
+    createTooltip(root, CONFIG[root.getAttribute('data-kind')]);
+  });
+})();
+</script>
+</body>
+</html>

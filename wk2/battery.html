@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tooltip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{ --font:-apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
+  --liq:#1C1C1E; --on:#FFFFFF; --card:#FFFFFF; --icon:#1C1C1E; --page:#F2F2F7; --track:rgba(120,120,128,.16); --label2:rgba(60,60,67,.6);
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+body[data-theme="midnight"]{ --liq:#F5F5F7; --on:#1C1C1E; --card:#1C1C1E; --icon:#F5F5F7; --page:#000; --track:rgba(120,120,128,.3); --label2:rgba(235,235,245,.6)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding:28px 0; background:var(--page); font-family:var(--font); -webkit-font-smoothing:antialiased; transition:background-color .4s}
+.card{position:relative; width:min(560px, 100vw - 24px); height:300px; border-radius:28px; background:var(--card); overflow:hidden; box-shadow:0 1px 0 rgba(0,0,0,.02), 0 12px 32px rgba(0,0,0,.06); transition:background-color .4s}
+.card.rich{height:400px}
+.head{position:absolute; left:24px; top:20px; font-size:13px; font-weight:600; color:var(--label2); letter-spacing:-.08px}
+.goo{position:absolute; inset:0; filter:url(#goo); pointer-events:none}
+.goo span{position:absolute; left:0; top:0; background:var(--liq); border-radius:999px; will-change:transform; transition:background-color .4s}
+.goo .body{border-radius:18px}
+.row{position:absolute; left:50%; bottom:58px; transform:translateX(-50%); display:flex; gap:26px}
+.ring{all:unset; position:relative; width:76px; height:76px; border-radius:50%; display:grid; place-items:center; cursor:pointer; -webkit-tap-highlight-color:transparent}
+.ring:focus-visible{outline:2px solid #0A84FF; outline-offset:4px}
+.ring svg.rg{position:absolute; inset:0; transform:rotate(-90deg); overflow:visible}
+.ring svg.rg circle{fill:none; stroke-width:6; stroke-linecap:round; transition:stroke .4s}
+.ring .trk{stroke:var(--track)}
+.ring .dev{position:relative; width:30px; height:30px; color:var(--icon); transition:color .25s ease}
+.ring.on .dev{color:var(--on)}
+.ripple{position:absolute; inset:0; border-radius:50%; box-shadow:0 0 0 1.5px var(--track); opacity:0; pointer-events:none}
+svg.sf{fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+.label{position:absolute; left:0; top:0; color:var(--on); pointer-events:none; opacity:0; white-space:nowrap; will-change:transform}
+.plainl{display:flex; flex-direction:column; align-items:center; gap:1px}
+.plainl b{font-size:13.5px; font-weight:600; letter-spacing:-.1px}
+.sub{font-size:12px; color:color-mix(in srgb, var(--on) 62%, transparent); font-variant-numeric:tabular-nums}
+.pc{font-style:normal; color:#30D158} .pc.low{color:#FF9F0A} .pc.lpm{color:#FFD60A}
+body[data-theme="midnight"] .pc{color:#248A3D} body[data-theme="midnight"] .pc.low{color:#C93400} body[data-theme="midnight"] .pc.lpm{color:#B25000}
+/* rich card */
+.richl{width:236px; padding:16px 16px 14px; pointer-events:none}
+.richl.live{pointer-events:auto}
+.rh{display:flex; justify-content:space-between; align-items:flex-start}
+.rh b{display:block; font-size:15px; font-weight:600; letter-spacing:-.24px}
+.big{font-size:30px; font-weight:600; letter-spacing:-.8px; line-height:1; font-variant-numeric:tabular-nums}
+.big small{font-size:15px; font-weight:600}
+.cells{display:flex; gap:3px; margin:12px 0 12px}
+.cells i{flex:1; height:6px; border-radius:3px; background:color-mix(in srgb, var(--on) 18%, transparent)}
+.cells i.f{background:#30D158} .cells i.f.low{background:#FF9F0A} .cells i.f.lpm{background:#FFD60A}
+.lpmrow{display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:10px; border-top:.5px solid color-mix(in srgb, var(--on) 18%, transparent); font-size:14px; font-weight:500; letter-spacing:-.15px}
+.sw{all:unset; position:relative; width:46px; height:28px; border-radius:14px; background:color-mix(in srgb, var(--on) 22%, transparent); cursor:pointer; transition:background-color .3s}
+.sw::after{content:""; position:absolute; left:2px; top:2px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.25); transition:transform .45s cubic-bezier(.3,1.4,.5,1)}
+.sw[aria-checked="true"]{background:#FFD60A} .sw[aria-checked="true"]::after{transform:translateX(18px)}
+.sw:focus-visible{outline:2px solid #0A84FF; outline-offset:2px}
+.themes{display:flex; gap:10px}
+.th{all:unset; width:24px; height:24px; border-radius:50%; cursor:pointer; box-shadow:inset 0 0 0 2px rgba(255,255,255,.9), 0 1px 4px rgba(0,0,0,.15); transition:transform .3s cubic-bezier(.3,1.5,.5,1)}
+.th[aria-pressed="true"]{transform:scale(1.18); box-shadow:inset 0 0 0 2px #fff, 0 0 0 2px var(--icon)}
+.th:focus-visible{outline:2px solid #0A84FF; outline-offset:3px}
+</style>
+</head>
+<body data-theme="midnight">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <filter id="goo"><feGaussianBlur stdDeviation="7" result="b"/><feColorMatrix in="b" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 26 -12"/></filter>
+  </defs></svg>
+  <section class="card plain" id="plain" aria-label="Batteries, plain tooltip"><span class="head">Batteries</span></section>
+  <section class="card rich" id="rich" aria-label="Batteries, rich tooltip"><span class="head">Batteries</span></section>
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const THEMES = [
+    { name:'Graphite', liq:'#1C1C1E', on:'#FFFFFF' }, { name:'Ocean', liq:'#0A84FF', on:'#FFFFFF' }, { name:'Indigo', liq:'#5E5CE6', on:'#FFFFFF' },
+    { name:'Coral', liq:'#FF6B57', on:'#FFFFFF' }, { name:'Midnight', mode:'midnight' }
+  ];
+  const DEV = [
+    { name:'iPhone', v:74, left:'About 9 hr left', icon:'<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 5h3"/>' },
+    { name:'AirPods Pro', v:82, left:'About 5 hr of listening', icon:'<path d="M7.5 4a3 3 0 0 0-3 3v2.5a3 3 0 0 0 3 3h1V20a1.5 1.5 0 0 0 3 0V7a3 3 0 0 0-3-3z"/><path d="M16.5 4a3 3 0 0 1 3 3v2.5a3 3 0 0 1-3 3h-1V20"/>' },
+    { name:'Apple Watch', v:18, left:'About 2 hr left', icon:'<rect x="6" y="6" width="12" height="12" rx="3.5"/><path d="M9 6l.6-3h4.8l.6 3M9 18l.6 3h4.8l.6-3"/>' },
+    { name:'iPad', v:56, left:'About 6 hr left', icon:'<rect x="4" y="3" width="16" height="18" rx="2.5"/><circle cx="12" cy="18.3" r=".7" fill="currentColor"/>' }
+  ];
+  const S = (k, d) => ({ x:0, v:0, k, d, to:0, step(dt){ if (reduce){ this.x = this.to; this.v = 0; return; } this.v += ((this.to - this.x) * this.k - this.v * this.d) * dt; this.x += this.v * dt; } });
+  const status = d => d.lpm ? 'lpm' : d.v < 20 ? 'low' : '';
+  const arcColor = d => d.lpm ? '#FFD60A' : d.v < 20 ? '#FF9F0A' : '#30D158';
+
+  function build(card, rich){
+    const devs = DEV.map(d => ({ ...d, lpm:false }));
+    card.insertAdjacentHTML('beforeend', `<div class="goo"><span class="trail"></span><span class="disc"></span><span class="drop"></span><span class="body"></span><span class="tail"></span></div>
+      <div class="row">${devs.map(d => `<button class="ring" aria-label="${d.name}"><span class="ripple"></span><svg class="rg" viewBox="0 0 76 76"><circle class="trk" cx="38" cy="38" r="33"/><circle class="arc" cx="38" cy="38" r="33" pathLength="100"/></svg><svg class="sf dev" viewBox="0 0 24 24">${d.icon}</svg></button>`).join('')}</div>
+      <div class="label ${rich ? 'richl' : 'plainl'}" role="tooltip" id="${card.id}-tip">${rich
+        ? `<div class="rh"><div><b class="nm"></b><span class="sub lft"></span></div><span class="big"><span class="pv"></span><small>%</small></span></div>
+           <div class="cells">${'<i></i>'.repeat(10)}</div>
+           <div class="lpmrow"><span>Low Power Mode</span><button class="sw" role="switch" aria-checked="false" aria-label="Low Power Mode"></button></div>`
+        : `<b class="nm"></b><span class="sub"><i class="pc"></i> · <span class="st"></span></span>`}</div>`);
+    const q = s => card.querySelector(s), G = n => q('.goo .' + n);
+    const disc = G('disc'), trail = G('trail'), drop = G('drop'), body = G('body'), tail = G('tail'), label = q('.label');
+    const rings = [...card.querySelectorAll('.ring')];
+    const paintArc = (r, d) => { const a = r.querySelector('.arc'); a.style.stroke = arcColor(d); a.setAttribute('stroke-dasharray', `${d.v} 100`); };
+    rings.forEach((r, i) => { paintArc(r, devs[i]); r.setAttribute('aria-describedby', label.id); });
+    const BW = rich ? 236 : 150, BH = rich ? 0 : 46;
+    const dx = S(260, 22), tx = S(80, 13), lx = S(190, 20), size = S(320, 21), bodyS = S(rich ? 200 : 260, rich ? 18 : 20), dropS = S(220, 18);
+    let idx = -1, open = false, cy = 0, ly = 0, raf, bh = BH;
+
+    function fill(i){
+      const d = devs[i], st = status(d), t0 = performance.now(), D = reduce ? 1 : 700;
+      q('.nm').textContent = d.name;
+      cancelAnimationFrame(raf);
+      if (rich){
+        q('.lft').textContent = d.lpm ? 'Low Power Mode is on' : d.left;
+        const pv = q('.pv'), cells = [...card.querySelectorAll('.cells i')];
+        pv.className = 'pv pc ' + st;
+        (function tick(now){ const k = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - k, 3); pv.textContent = Math.round(d.v * e); if (k < 1) raf = requestAnimationFrame(tick); })(t0);
+        cells.forEach((c, j) => { const on = j < Math.round(d.v / 10); c.className = on ? 'f ' + st : '';
+          if (on && !reduce) c.animate([{ transform:'scaleX(0)', opacity:0 }, { transform:'scaleX(1)', opacity:1 }], { duration:300, delay:180 + j * 40, easing:'cubic-bezier(.2,.9,.3,1.2)', fill:'backwards' }); });
+        q('.sw').setAttribute('aria-checked', d.lpm);
+      } else {
+        const pc = q('.pc'); pc.className = 'pc ' + st; q('.st').textContent = d.lpm ? 'Low Power Mode' : d.v < 20 ? 'Low Battery' : 'Not Charging';
+        (function tick(now){ const k = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - k, 3); pc.textContent = Math.round(d.v * e) + '%'; if (k < 1) raf = requestAnimationFrame(tick); })(t0);
+      }
+      if (!reduce){
+        rings[i].querySelector('.arc').animate([{ strokeDasharray:'0 100' }, { strokeDasharray:`${d.v} 100` }], { duration:750, easing:'cubic-bezier(.2,.9,.25,1.05)' });
+        rings[i].querySelector('.ripple').animate([{ opacity:.5, transform:'scale(.9)' }, { opacity:0, transform:'scale(1.45)' }], { duration:620, easing:'cubic-bezier(.2,.7,.3,1)' });
+      }
+    }
+    function show(i){
+      const r = rings[i], a = r.getBoundingClientRect(), c = card.getBoundingClientRect(), x = a.left - c.left + a.width / 2, first = !open;
+      if (i === idx && open) return;
+      rings.forEach((x2, k) => x2.classList.toggle('on', k === i)); idx = i; open = true; fill(i);
+      cy = a.top - c.top + a.height / 2;
+      bh = rich ? label.offsetHeight : BH;
+      const half = BW / 2 + 14; ly = a.top - c.top - 22 - bh / 2;
+      dx.to = tx.to = x; lx.to = Math.max(half, Math.min(card.clientWidth - half, x));
+      if (first){ dx.x = tx.x = x; lx.x = lx.to; dx.v = tx.v = lx.v = 0; size.x = 0; size.v = 0; bodyS.x = 0; bodyS.v = 0; dropS.x = 0; }
+      size.to = 50; bodyS.to = 1; dropS.to = 1;
+      clearTimeout(show.t); show.t = setTimeout(() => { dropS.to = 0; }, reduce ? 0 : (rich ? 340 : 260));
+      label.classList.add('live');
+      const parts = rich ? [...label.querySelectorAll('.rh, .cells, .lpmrow')] : [label];
+      label.style.opacity = rich ? 1 : '';
+      if (rich){
+        parts.forEach((p, k) => p.animate([{ opacity:0, transform:'translateY(10px)', filter:'blur(4px)' }, { opacity:1, transform:'translateY(0)', filter:'blur(0px)' }],
+          { duration:reduce ? 1 : 420, delay:reduce ? 0 : (first ? 200 : 40) + k * 60, easing:'cubic-bezier(.2,.9,.3,1.1)', fill:'both' }));
+      } else {
+        label.animate([{ opacity:first ? 0 : .2, filter:'blur(4px)' }, { opacity:1, filter:'blur(0px)' }], { duration:reduce ? 1 : 260, delay:first && !reduce ? 120 : 0, fill:'forwards', easing:'ease-out' });
+      }
+    }
+    function hide(){
+      if (!open) return; open = false; label.classList.remove('live');
+      rings.forEach(x => x.classList.remove('on'));
+      const parts = rich ? [...label.querySelectorAll('.rh, .cells, .lpmrow')] : [label];
+      parts.forEach(p => p.animate([{ opacity:1 }, { opacity:0, filter:'blur(4px)' }], { duration:reduce ? 1 : 140, fill:'forwards' }));
+      dropS.to = 1; bodyS.to = 0;
+      clearTimeout(show.t); show.t = setTimeout(() => { if (!open){ size.to = 0; dropS.to = 0; } }, reduce ? 0 : 180);
+    }
+
+    let last = performance.now();
+    (function frame(now){
+      requestAnimationFrame(frame);
+      const dt = Math.min(.034, (now - last) / 1000); last = now;
+      [dx, tx, lx, size, bodyS, dropS].forEach(s => s.step(dt));
+      const R = Math.max(0, size.x), sp = Math.min(28, Math.abs(dx.v) / 18), b = Math.max(0, bodyS.x);
+      disc.style.width = disc.style.height = R + 'px'; disc.style.transform = `translate(${dx.x - R / 2}px, ${cy - R / 2}px)`;
+      const tr = R * .72; trail.style.width = trail.style.height = tr + 'px'; trail.style.transform = `translate(${tx.x - tr / 2}px, ${cy - tr / 2}px)`;
+      const w = BW * b + sp, h = bh * b, by = ly + (1 - b) * (bh / 2 + 30);
+      body.style.width = w + 'px'; body.style.height = h + 'px'; body.style.transform = `translate(${lx.x - w / 2}px, ${by - h / 2}px)`;
+      // the tail always points at the device, even when the card is nudged sideways to stay on screen
+      const tl = 13 * b, tailX = Math.max(lx.x - w / 2 + 18, Math.min(lx.x + w / 2 - 18, dx.x));
+      tail.style.width = tail.style.height = tl + 'px'; tail.style.transform = `translate(${tailX - tl / 2}px, ${by + h / 2 - tl * .55}px)`;
+      const dr = 22 * Math.max(0, dropS.x) * Math.min(1, R / 40), dy = (cy - R / 2 + by + h / 2) / 2;
+      drop.style.width = dr + 'px'; drop.style.height = (dr * 1.7) + 'px'; drop.style.transform = `translate(${dx.x - dr / 2}px, ${dy - dr * .85}px)`;
+      label.style.transform = `translate(${lx.x - label.offsetWidth / 2}px, ${by - label.offsetHeight / 2}px)`;
+    })(last);
+
+    let timer;
+    const later = () => { clearTimeout(timer); timer = setTimeout(hide, rich ? 200 : 120); };
+    rings.forEach((r, i) => {
+      r.addEventListener('pointerenter', () => { clearTimeout(timer); show(i); });
+      r.addEventListener('pointerleave', later);
+      r.addEventListener('focus', () => { clearTimeout(timer); show(i); });
+      r.addEventListener('blur', e => { if (!label.contains(e.relatedTarget)) later(); });
+    });
+    label.addEventListener('pointerenter', () => { if (open) clearTimeout(timer); });
+    label.addEventListener('pointerleave', later);
+    label.addEventListener('focusout', e => { if (!label.contains(e.relatedTarget) && !rings.includes(e.relatedTarget)) later(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
+    // rich action: Low Power Mode recolors the ring, the cells and the reading
+    if (rich){
+      const sw = q('.sw');
+      sw.addEventListener('click', () => {
+        const d = devs[idx]; if (!d) return; d.lpm = !d.lpm; sw.setAttribute('aria-checked', d.lpm);
+        paintArc(rings[idx], d);
+        const st = status(d); q('.pv').className = 'pv pc ' + st; q('.lft').textContent = d.lpm ? 'Low Power Mode is on' : d.left;
+        card.querySelectorAll('.cells i.f').forEach((c, j) => { c.className = 'f ' + st; if (!reduce) c.animate([{ transform:'scaleY(1)' }, { transform:'scaleY(2)' }, { transform:'scaleY(1)' }], { duration:300, delay:j * 30 }); });
+        if (!reduce) rings[idx].querySelector('.ripple').animate([{ opacity:.6, transform:'scale(.9)' }, { opacity:0, transform:'scale(1.5)' }], { duration:600 });
+      });
+    }
+    return { show, hide };
+  }
+  window.__bt = { plain:build(document.getElementById('plain'), false), rich:build(document.getElementById('rich'), true) };
+})();
+</script>
+</body>
+</html>
