@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hover</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;700&family=Sora:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one black flight-deck panel (the prototype) beside a spec sheet; grey line-art machines, lime only when powered. */
+:root{
+  --bg:#E8E9E5; --fg:#0D0E0C; --muted:#5C5F58; --line:#D2D4CE; --card:#F6F7F4;
+  --deck:#060606; --plate:#0E0F0E; --frame:#3A3B38; --dim:#7D807A; --lime:#CDEB3C;
+  --f-display:"Oxanium","Eurostile",sans-serif;
+  --f-body:"Sora","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"Geist Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0E0F0D;--fg:#E9EBE6;--muted:#9A9E96;--line:#262824;--card:#151614;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E0F0D;--fg:#E9EBE6;--muted:#9A9E96;--line:#262824;--card:#151614;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;margin:0}
+.wrap{max-width:1160px;margin:0 auto;padding-inline:clamp(16px,4vw,40px);padding-block:56px 80px}
+.sr{position:absolute;width:1px;height:1px;opacity:0;margin:0;pointer-events:none}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.head{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:20px 56px;align-items:end;padding-bottom:36px;border-bottom:1px solid var(--line);margin-bottom:36px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(56px,9vw,104px);line-height:.9;margin:10px 0 14px;letter-spacing:.02em;text-transform:uppercase}
+.tone{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tone b{color:var(--fg);font-weight:500}
+.concept p{margin:0 0 12px;font-size:16.5px;line-height:1.55;max-width:60ch}
+.concept p:last-child{margin:0}
+.refs{font-family:var(--f-mono);font-size:12px;color:var(--muted);line-height:1.6}
+.body{display:grid;grid-template-columns:minmax(0,480px) minmax(0,1fr);gap:32px;align-items:start}
+@media (max-width:920px){.head,.body{grid-template-columns:minmax(0,1fr)}}
+
+/* ============ flight deck ============ */
+.deck{background:var(--deck);color:#E9EBE6;border-radius:22px;padding:22px 22px 12px;position:relative;overflow:hidden;
+}
+.k-top{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:10px;border-bottom:1px solid #222}
+.k-top b{font:700 20px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase}
+.k-top span{font:500 11px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.k-top i{font-style:normal;color:var(--lime)}
+.gh{display:flex;justify-content:space-between;font:500 10.5px/14px var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);padding:20px 0 8px}
+.row{display:flex;align-items:center;gap:20px;min-height:68px;border-top:1px solid #1C1C1C;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.lab{flex:1;font:400 16px/22px var(--f-body);color:#8A8D86;transition:color .3s}
+.row input:checked ~ .lab{color:#F2F4EE}
+.meta{font:500 12px/16px var(--f-mono);color:#5E615A;text-align:right;transition:color .3s}
+.row input:checked ~ .meta{color:var(--lime)}
+.ctl{flex:none;position:relative;display:block}
+.ctl svg{display:block;overflow:visible}
+.row:has(input:focus-visible) .ctl{outline:2px solid var(--lime);outline-offset:5px;border-radius:14px}
+.tg{width:120px;height:52px}.cb{width:48px;height:48px}.rd{width:48px;height:48px}
+
+.hint{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin-top:10px}
+
+/* ============ spec ============ */
+.spec{background:var(--card);border:1px solid var(--line);font-family:var(--f-mono);font-size:12.5px;line-height:1.55}
+.spec-title{display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.spec section{padding:14px 16px;border-bottom:1px solid var(--line);min-width:0}
+.spec section:nth-child(odd){border-right:1px solid var(--line)}
+.spec .wide{grid-column:1/-1;border-right:0!important}
+.spec h4{margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+.spec dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 12px}
+.spec dt{color:var(--muted)}
+.spec dd{margin:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.stages figure{margin:0;background:#060606;color:#7D807A;border-radius:10px;padding:16px 6px 10px;display:grid;gap:10px;justify-items:center;font-size:10px;letter-spacing:.08em;text-transform:uppercase;text-align:center}
+.beats{display:grid;gap:6px}
+.beat{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center}
+.track{position:relative;height:14px;background:var(--line);border-radius:3px}
+.track i{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--fg)}
+.track i.l{background:#9DBA12}
+.scale{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;color:var(--muted);font-size:11px}
+.scale div{display:flex;justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:10px 18px}
+.chip{display:flex;align-items:center;gap:8px}
+.chip i{width:22px;height:22px;border:1px solid var(--line);flex:none;border-radius:4px}
+@media (max-width:560px){.grid{grid-template-columns:minmax(0,1fr)}.spec section:nth-child(odd){border-right:0}.stages{grid-template-columns:repeat(2,minmax(0,1fr))}.beat,.scale{grid-template-columns:90px minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="sock" cx=".5" cy=".42" r=".6"><stop offset="0" stop-color="#1A1B19"/><stop offset=".75" stop-color="#0B0C0B"/><stop offset="1" stop-color="#151614"/></radialGradient>
+    <radialGradient id="glowL" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#CDEB3C" stop-opacity=".35"/><stop offset="1" stop-color="#CDEB3C" stop-opacity="0"/></radialGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+  <div class="body">
+    <div>
+      <div class="deck">
+        <div class="k-top"><b>Flight deck</b><span>UAV-07 · <i>GPS 14</i></span></div>
+
+        <div class="gh"><span>Toggle · pixel teleport</span><span>off / on</span></div>
+        <label class="row"><input class="sr" type="checkbox" role="switch" id="t-arm" checked><span class="ctl tg" aria-hidden="true"></span><span class="lab">Motors armed</span><span class="meta">4 / 4</span></label>
+        <label class="row"><input class="sr" type="checkbox" role="switch" id="t-rth"><span class="ctl tg" aria-hidden="true"></span><span class="lab">Return to home</span><span class="meta">1.2 km</span></label>
+
+        <div class="gh"><span>Checkbox · teleport in place</span><span>systems</span></div>
+        <label class="row"><input class="sr" type="checkbox" id="c-obs" checked><span class="ctl cb" aria-hidden="true"></span><span class="lab">Obstacle sensing</span><span class="meta">360°</span></label>
+        <label class="row"><input class="sr" type="checkbox" id="c-gim"><span class="ctl cb" aria-hidden="true"></span><span class="lab">Gimbal lock</span><span class="meta">3-axis</span></label>
+        <label class="row"><input class="sr" type="checkbox" id="c-rec"><span class="ctl cb" aria-hidden="true"></span><span class="lab">Record 4K</span><span class="meta">60 fps</span></label>
+
+        <div class="gh" id="mode-h"><span>Radio · one pod, three sockets</span><span>flight mode</span></div>
+        <div role="radiogroup" aria-labelledby="mode-h">
+          <label class="row"><input class="sr" type="radio" name="mode" id="m-cine"><span class="ctl rd" aria-hidden="true"></span><span class="lab">Cine</span><span class="meta">6 m/s</span></label>
+          <label class="row"><input class="sr" type="radio" name="mode" id="m-normal" checked><span class="ctl rd" aria-hidden="true"></span><span class="lab">Normal</span><span class="meta">15 m/s</span></label>
+          <label class="row"><input class="sr" type="radio" name="mode" id="m-sport"><span class="ctl rd" aria-hidden="true"></span><span class="lab">Sport</span><span class="meta">21 m/s</span></label>
+        </div>
+      </div>
+      <div class="hint">Try: switch on Return to home and watch the pod spool up, dissolve and rebuild across the pad. Tick Gimbal lock, then send the pod down to Sport.</div>
+    </div>
+
+    <div class="spec" aria-label="Hover spec">
+      <div class="spec-title"><span>Spec · Hover</span><span>1 px = 1 pt</span></div>
+      <div class="grid">
+        <section class="wide"><h4>Toggle · pixel teleport, 1300 ms</h4>
+          <div class="stages">
+            <figure><span class="ctl tg" data-fixed="0"></span>1 · Off · on the pad</figure>
+            <figure><span class="ctl tg" data-fixed="0.15"></span>2 · Spool up + lift</figure>
+            <figure><span class="ctl tg" data-fixed="0.5"></span>3 · Pixels teleport</figure>
+            <figure><span class="ctl tg" data-fixed="1"></span>4 · On · idling</figure>
+          </div>
+        </section>
+        <section class="wide"><h4>Motion beats</h4>
+          <div class="beats">
+            <div class="scale"><span></span><div><span>0</span><span>275</span><span>550</span><span>825</span><span>1100 ms</span></div></div>
+            <div class="beat"><span>Rotors spool up</span><div class="track"><i class="l" style="left:0;width:25%"></i></div></div>
+            <div class="beat"><span>Dissolve</span><div class="track"><i style="left:20%;width:12%"></i></div></div>
+            <div class="beat"><span>Pixels travel</span><div class="track"><i class="l" style="left:22%;width:64%"></i></div></div>
+            <div class="beat"><span>Ghost grids</span><div class="track"><i style="left:18%;width:72%;opacity:.4"></i></div></div>
+            <div class="beat"><span>Speed lines</span><div class="track"><i style="left:25%;width:50%;opacity:.5"></i></div></div>
+            <div class="beat"><span>Rebuild</span><div class="track"><i style="left:74%;width:16%"></i></div></div>
+          </div>
+        </section>
+        <section class="wide"><h4>Shared system · one pod, one move, three sockets</h4><dl>
+          <dt>Pod</dt><dd>Ø39 body #121311 · rotor r 17, 2 blades 70° stroke 2.2 · hub Ø3</dd>
+          <dt>Off / on</dt><dd>grey #555 still · lime #CDEB3C idling 1.5 rev/s + glow 35%</dd>
+          <dt>Move</dt><dd>spin up 4 rev/s + 2 dotted orbits → dissolve into 44 pixels (5 × 5) → travel → rebuild + orbits → idle</dd>
+          <dt>Sockets</dt><dd>toggle pill 120 × 52 r26 · checkbox square 48 × 48 r14 · radio circle Ø48 · all #0B0C0B, 1 px #262626</dd>
+          <dt>Travel</dt><dd>toggle → across 68 · radio → between rows · checkbox → in place, pixels burst ±9 and regroup</dd>
+          <dt>Extra</dt><dd>checkbox has no hub dot; on adds a white ✓ (stroke 2.6) after rebuilding</dd>
+        </dl></section>
+        <section><h4>Type</h4><dl>
+          <dt>Label</dt><dd>Sora 400, 16 / 22, #8A8D86 rest · #F2F4EE on</dd>
+          <dt>Group</dt><dd>Geist Mono 500, 10.5 / 14, +0.16em, uppercase</dd>
+          <dt>Meta</dt><dd>Geist Mono 500, 12 / 16 · lime when on</dd>
+          <dt>Title</dt><dd>Oxanium 700, 20 / 20, +0.08em, uppercase</dd>
+        </dl></section>
+        <section><h4>Spacing</h4><dl>
+          <dt>Panel</dt><dd>480 wide, pad 22 / 22 / 12, r 22</dd>
+                    <dt>Header</dt><dd>42 (20 above, 8 below)</dd>
+          <dt>Row</dt><dd>68 min · control→label 20</dd>
+          <dt>Divider</dt><dd>1 px #1C1C1C</dd>
+        </dl></section>
+        <section><h4>Toggle</h4><dl>
+          <dt>Pad</dt><dd>120 × 52, r 26, #0B0C0B, 1 px #262626</dd>
+          <dt>Pod</dt><dd>one rotor r 17 in a Ø39 pod, blades stroke 2.2</dd>
+          <dt>Teleport</dt><dd>centre x 26 → 94 · 44 pixels, 5 × 5 grid, each starts at a random delay ≤ 40%</dd>
+          <dt>Ghost</dt><dd>outline grid 0.6 px #4A4C47 at both ends · lift ×1.11 before dissolving</dd>
+        </dl></section>
+        <section><h4>Checkbox</h4><dl>
+          <dt>Socket</dt><dd>48 × 48, r 14</dd>
+          <dt>Off</dt><dd>grey pod, still</dd>
+          <dt>On</dt><dd>lime pod idling + white ✓</dd>
+          <dt>Move</dt><dd>teleport in place, 1100 ms</dd>
+        </dl></section>
+        <section><h4>Radio</h4><dl>
+          <dt>Socket</dt><dd>Ø48 circle, empty socket shows hub dot</dd>
+          <dt>Pod</dt><dd>one per group, always lime</dd>
+          <dt>Move</dt><dd>teleport between sockets, 1300 ms</dd>
+        </dl></section>
+        <section><h4>Easing</h4><dl>
+          <dt>Spin</dt><dd>speed eases to target, τ ≈ 250 ms</dd>
+          <dt>Pixels</dt><dd>cubic in-out, random delay ≤ 40%, arc 4–14</dd>
+          <dt>Orbits</dt><dd>sin envelope at start and end</dd>
+          <dt>Check</dt><dd>draws in after rebuild, 200 ms</dd>
+        </dl></section>
+        <section class="wide"><h4>Color</h4><div class="chips">
+          <span class="chip"><i style="background:#060606"></i>Deck #060606</span>
+          <span class="chip"><i style="background:#3A3B38"></i>Frame #3A3B38</span>
+          <span class="chip"><i style="background:#CDEB3C"></i>Power #CDEB3C</span>
+          <span class="chip"><i style="background:#555555"></i>Idle blade #555555</span>
+          <span class="chip"><i style="background:#8A8D86"></i>Label rest #8A8D86</span>
+        </div></section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var NS='http://www.w3.org/2000/svg', LIME=[205,235,60], GREY=[85,85,85];
+  var still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function el(t,a,p){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+  function clamp(v){return v<0?0:v>1?1:v}
+  function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
+  function back(t){var c=1.4;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)}
+  function span(t,a,b){return clamp((t-a)/(b-a))}
+  function mix(a,b,t){return 'rgb('+[0,1,2].map(function(i){return Math.round(a[i]+(b[i]-a[i])*t)}).join(',')+')'}
+  var anims=[];
+  function run(d,fn){if(still){fn(1);return}anims.push({s:performance.now(),d:d,fn:fn})}
+
+  /* ---- rotor: housing + two blades with inertia ---- */
+  var rotors=[];
+  function rotor(parent,cx,cy,r,big){
+    var g=el('g',{transform:'translate('+cx+' '+cy+')'},parent);
+    el('circle',{r:r,fill:'none',stroke:'#3A3B38','stroke-width':1.5},g);
+    var bl=el('g',{},g), b1=el('path',{fill:'none','stroke-width':big?2.2:2,'stroke-linecap':'round'},bl), b2=el('path',{fill:'none','stroke-width':big?2.2:2,'stroke-linecap':'round'},bl);
+    var hub=el('circle',{r:1.6,fill:'#F2F4EE'},g);
+    var o={hub:hub,g:g,bl:bl,b1:b1,b2:b2,r:r*.72,ang:Math.random()*360,w:0,wT:0,p:0,pT:0};
+    rotors.push(o); return o;
+  }
+  function arc(r,a0,a1){var x0=r*Math.cos(a0),y0=r*Math.sin(a0),x1=r*Math.cos(a1),y1=r*Math.sin(a1);return 'M'+x0.toFixed(2)+' '+y0.toFixed(2)+' A'+r+' '+r+' 0 0 1 '+x1.toFixed(2)+' '+y1.toFixed(2)}
+  function drawRotor(o){var sp=Math.min(140,o.w/10), a=70+sp, rad=Math.PI/180;
+    o.b1.setAttribute('d',arc(o.r,0,a*rad)); o.b2.setAttribute('d',arc(o.r,Math.PI,Math.PI+a*rad));
+    var c=mix(GREY,LIME,o.p); o.b1.setAttribute('stroke',c); o.b2.setAttribute('stroke',c);
+    o.bl.setAttribute('transform','rotate('+o.ang.toFixed(1)+')')}
+  function power(list,on,boost){list.forEach(function(o){o.pT=on?1:0;o.wT=on?(boost?1440:540):0})}
+
+  var last=performance.now();
+  function loop(now){var dt=Math.min(.05,(now-last)/1000);last=now;
+    for(var i=anims.length-1;i>=0;i--){var a=anims[i],t=clamp((now-a.s)/a.d);a.fn(t);if(t>=1)anims.splice(i,1)}
+    rotors.forEach(function(o){var k=Math.min(1,dt*4);o.w+=(o.wT-o.w)*k;o.p+=(o.pT-o.p)*Math.min(1,dt*5);if(!still)o.ang=(o.ang+o.w*dt)%360;drawRotor(o)});
+    requestAnimationFrame(loop)}
+  requestAnimationFrame(loop);
+
+  /* ================= one shared unit: the pod =================
+     housing + rotor (grey & still = off, lime & spinning = on) + dotted orbits + pixel teleport + ghost grid */
+  var CELL=5, PIX=[];
+  for(var gy=-4;gy<4;gy++)for(var gx=-4;gx<4;gx++){var qx=(gx+.5)*CELL,qy=(gy+.5)*CELL;if(qx*qx+qy*qy<=19*19)PIX.push([gx*CELL,gy*CELL])}
+  function ghostGrid(svg){var g=el('g',{fill:'none',stroke:'#4A4C47','stroke-width':.6,opacity:0},svg);PIX.forEach(function(p){el('rect',{x:p[0],y:p[1],width:CELL,height:CELL},g)});return g}
+  function makePod(svg,opt){
+    opt=opt||{};
+    var P={};
+    P.glow=el('circle',{r:26,fill:'url(#glowL)',opacity:0},svg);
+    P.gA=ghostGrid(svg); P.gB=ghostGrid(svg);
+    var orb=el('g',{fill:'none',stroke:'#CDEB3C','stroke-width':1,'stroke-dasharray':'1 2.6','stroke-linecap':'round',opacity:0},svg), os=[0,1].map(function(i){return el('ellipse',{rx:i?25:22},orb)});
+    P.lines=el('g',{stroke:'#CDEB3C','stroke-linecap':'round'},svg); P.ls=[0,1,2].map(function(){return el('line',{'stroke-width':1.2,'stroke-opacity':0},P.lines)});
+    P.shadow=el('ellipse',{rx:18,ry:18,fill:'#000','fill-opacity':.6,filter:'url(#soft)'},svg);
+    P.body=el('g',{},svg);
+    el('circle',{r:19.5,fill:'#121311',stroke:'#2A2B29','stroke-width':1},P.body);
+    P.rot=rotor(P.body,0,0,17,true);
+    if(opt.check)P.rot.hub.remove();
+    if(opt.check)P.chk=el('path',{d:'M-6 0.5l4 4L6.5 -4.5',fill:'none',stroke:'#F2F4EE','stroke-width':2.6,'stroke-linecap':'round','stroke-linejoin':'round',pathLength:1,'stroke-dasharray':'1 2',opacity:1},P.body);
+    var pg=el('g',{},svg), seeds=PIX.map(function(){return Math.random()});
+    var px=PIX.map(function(p,i){return el('rect',{width:CELL-.8,height:CELL-.8,fill:i%5===0?'#F2F4EE':'#CDEB3C',opacity:0},pg)});
+    P.put=function(x,y,vis,lift,glow){var sc=(1+.22*lift)*(.75+.25*vis);P.body.setAttribute('transform','translate('+x+' '+y+') scale('+sc+')');P.body.setAttribute('opacity',vis);
+      P.shadow.setAttribute('cx',x+3*lift);P.shadow.setAttribute('cy',y+1+4*lift);P.shadow.setAttribute('rx',18*(1-.45*lift));P.shadow.setAttribute('ry',18*(1-.45*lift));P.shadow.setAttribute('fill-opacity',(.6-.3*lift)*vis);
+      P.glow.setAttribute('cx',x);P.glow.setAttribute('cy',y);P.glow.setAttribute('opacity',glow)};
+    P.orbit=function(x,y,ph,amt){orb.setAttribute('opacity',amt);os.forEach(function(e,i){e.setAttribute('ry',Math.max(1,(i?25:22)*Math.abs(Math.cos(ph*(1+i*.4)+i))));e.setAttribute('transform','translate('+x+' '+y+') rotate('+(i?-35:35)+')')})};
+    P.ghost=function(g,x,y,o){g.setAttribute('transform','translate('+x+' '+y+')');g.setAttribute('opacity',o)};
+    P.pixels=function(ax,ay,bx,by,t,scatter){px.forEach(function(r,i){var p=PIX[i],d=seeds[i]*.4,k=ease(span(t,d,d+.6)),bump=Math.sin(Math.PI*k);
+      var sx=scatter?(p[0]+2.5)*.5*scatter/9*bump:0, sy=scatter?(p[1]+2.5)*.5*scatter/9*bump:0;
+      var x=ax+(bx-ax)*k+p[0]+sx+(by!==ay?10*bump*(.4+seeds[i]):0), y=ay+(by-ay)*k+p[1]+sy-(bx!==ax?10*bump*(.4+seeds[i]):0);
+      r.setAttribute('x',x+.4);r.setAttribute('y',y+.4);r.setAttribute('opacity',t<=0||t>=1?0:1)})};
+    P.speed=function(x,y,dx,dy,amt){P.ls.forEach(function(l,i){var off=(i-1)*12,len=(14+i*6)*amt;
+      if(dx){l.setAttribute('x1',x-dx*(22+i*3));l.setAttribute('x2',x-dx*(22+i*3+len));l.setAttribute('y1',y+off);l.setAttribute('y2',y+off)}
+      else{l.setAttribute('y1',y-dy*(22+i*3));l.setAttribute('y2',y-dy*(22+i*3+len));l.setAttribute('x1',x+off*.8);l.setAttribute('x2',x+off*.8)}
+      l.setAttribute('stroke-opacity',amt*.8)})};
+    P.power=function(on,boost){power([P.rot],on,boost)};
+    P.snap=function(on){P.rot.pT=on?1:0;P.rot.wT=on?540:0;P.rot.p=P.rot.pT;P.rot.w=P.rot.wT};
+    /* the one choreography every control uses: spin up + orbit → dissolve → pixels travel → rebuild + orbit → idle */
+    P.move=function(ax,ay,bx,by,on,dur,extra){
+      P.power(true,true);
+      var dx=Math.sign(bx-ax),dy=Math.sign(by-ay),inPlace=!dx&&!dy;
+      run(dur,function(t){
+        var lift=Math.sin(Math.PI*span(t,0,.3))*.5, out=1-ease(span(t,.2,.32)), back_in=ease(span(t,.74,.9));
+        var atB=t>=.5, vis=atB?back_in:out, x=atB?bx:ax, y=atB?by:ay;
+        P.put(x,y,vis,atB?Math.sin(Math.PI*span(t,.74,1))*.4:lift,on?(atB?Math.max(.3,ease(span(t,.7,1))):1):(atB?0:1-ease(span(t,.2,.6))));
+        P.orbit(atB?bx:ax,atB?by:ay,t*8,atB?Math.sin(Math.PI*span(t,.7,1))*.85:Math.sin(Math.PI*span(t,0,.32))*.85);
+        P.ghost(P.gA,ax,ay,Math.sin(Math.PI*span(t,.18,.6))*.9); P.ghost(P.gB,bx,by,inPlace?0:Math.sin(Math.PI*span(t,.45,.9))*.9);
+        P.pixels(ax,ay,bx,by,span(t,.22,.86),inPlace?9:0);
+        if(!inPlace)P.speed(ax+(bx-ax)*ease(span(t,.25,.8)),ay+(by-ay)*ease(span(t,.25,.8)),dx,dy,Math.sin(Math.PI*span(t,.25,.8)));
+        if(extra)extra(t);
+        if(t>=1){P.power(on,false);P.pixels(0,0,0,0,0,0)}
+      });
+    };
+    return P;
+  }
+
+  /* ================= toggle: pod teleports across the pad ================= */
+  document.querySelectorAll('.tg').forEach(function(host){
+    var s=el('svg',{width:120,height:52,viewBox:'0 0 120 52'},host);
+    el('rect',{x:.5,y:.5,width:119,height:51,rx:25.5,fill:'#0B0C0B',stroke:'#262626'},s);
+    var P=makePod(s);
+    if(host.dataset.fixed!==undefined){var f=+host.dataset.fixed;
+      if(f<=0){P.put(26,26,1,0,0);P.snap(false)}
+      else if(f<.3){P.put(26,26,1,.4,1);P.orbit(26,26,.7,.85);P.rot.p=1;P.rot.w=1440}
+      else if(f<1){P.put(26,26,0,0,.3);P.ghost(P.gA,26,26,.8);P.ghost(P.gB,94,26,.8);P.pixels(26,26,94,26,.5,0);P.speed(60,26,1,0,.8);P.rot.p=1;P.rot.w=1440}
+      else{P.put(94,26,1,0,1);P.snap(true)}
+      P.rot.ang=Math.random()*360;drawRotor(P.rot);rotors.splice(rotors.indexOf(P.rot),1);return}
+    var inp=host.previousElementSibling;
+    P.put(inp.checked?94:26,26,1,0,inp.checked?1:0); P.snap(inp.checked);
+    inp.addEventListener('change',function(){var on=inp.checked;P.move(on?26:94,26,on?94:26,26,on,1300)});
+  });
+
+  /* ================= checkbox: same pod, teleports in place (scatter + rebuild) and wears a check ================= */
+  document.querySelectorAll('.cb').forEach(function(host){
+    var s=el('svg',{width:48,height:48,viewBox:'0 0 48 48'},host);
+    el('rect',{x:.5,y:.5,width:47,height:47,rx:14,fill:'#0B0C0B',stroke:'#262626'},s);
+    var P=makePod(s,{check:true}), inp=host.previousElementSibling;
+    function chk(v){P.chk.setAttribute('stroke-dashoffset',1-v)}
+    P.put(24,24,1,0,inp.checked?1:0); P.snap(inp.checked); chk(inp.checked?1:0);
+    inp.addEventListener('change',function(){var on=inp.checked;
+      if(!on)chk(0);
+      P.move(24,24,24,24,on,1100,function(t){if(on)chk(ease(span(t,.82,1)))});
+    });
+  });
+
+  /* ================= radio: one pod for the group, teleports between sockets ================= */
+  var stops=document.querySelector('[role="radiogroup"][aria-labelledby="mode-h"]'); stops.style.position='relative';
+  var inputs=[].slice.call(stops.querySelectorAll('input'));
+  inputs.forEach(function(inp){var s=el('svg',{width:48,height:48,viewBox:'0 0 48 48'},inp.nextElementSibling);
+    el('circle',{cx:24,cy:24,r:23.5,fill:'#0B0C0B',stroke:'#262626'},s);el('circle',{cx:24,cy:24,r:1.6,fill:'#3A3B38'},s)});
+  var ov=el('svg',{},stops); ov.style.cssText='position:absolute;left:0;top:0;overflow:visible;pointer-events:none';
+  var RP=makePod(ov), cur=stops.querySelector('input:checked');
+  function centre(inp){var c=stops.getBoundingClientRect(),b=inp.nextElementSibling.getBoundingClientRect();return [b.left-c.left+24,b.top-c.top+24]}
+  function place(){var c=stops.getBoundingClientRect();ov.setAttribute('width',c.width);ov.setAttribute('height',c.height);var p=centre(cur);RP.put(p[0],p[1],1,0,1)}
+  RP.snap(true); place(); window.addEventListener('resize',place); if(document.fonts&&document.fonts.ready)document.fonts.ready.then(place);
+  inputs.forEach(function(inp){inp.addEventListener('change',function(){var a=centre(cur),b=centre(inp);cur=inp;if(a[1]===b[1])return;RP.move(a[0],a[1],b[0],b[1],true,1300)})});
+})();
+</script>
+</body>
+</html>

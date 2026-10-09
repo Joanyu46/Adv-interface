@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one black "open call" panel (the prototype) beside a spec sheet; white line + one liquid gradient carry everything. */
+:root{
+  --bg:#EBEAEC; --fg:#111012; --muted:#5F5C63; --line:#D5D3D8; --card:#F7F6F8;
+  --night:#0B0B0C; --plate:#141415; --edge:#262628; --white:#F2F2F2; --rest:#8C8A90;
+  --pink:#FF6FA8; --lav:#C9A7FF; --pale:#F4E9FF;
+  --f-serif:"Instrument Serif",Georgia,serif;
+  --f-body:"Hanken Grotesk","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"Geist Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0F0E10;--fg:#ECEAEE;--muted:#9B98A0;--line:#27252A;--card:#161518;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F0E10;--fg:#ECEAEE;--muted:#9B98A0;--line:#27252A;--card:#161518;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;margin:0}
+.wrap{max-width:1160px;margin:0 auto;padding-inline:clamp(16px,4vw,40px);padding-block:56px 80px}
+.sr{position:absolute;width:1px;height:1px;opacity:0;margin:0;pointer-events:none}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.head{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:20px 56px;align-items:end;padding-bottom:36px;border-bottom:1px solid var(--line);margin-bottom:36px}
+h1{font-family:var(--f-serif);font-weight:400;font-size:clamp(56px,9vw,108px);line-height:.9;margin:10px 0 14px;letter-spacing:-.02em}
+h1 em{font-style:italic}
+.tone{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tone b{color:var(--fg);font-weight:500}
+.concept p{margin:0 0 12px;font-size:16.5px;line-height:1.55;max-width:60ch}
+.concept p:last-child{margin:0}
+.refs{font-family:var(--f-mono);font-size:12px;color:var(--muted);line-height:1.6}
+.body{display:grid;grid-template-columns:minmax(0,480px) minmax(0,1fr);gap:32px;align-items:start}
+@media (max-width:920px){.head,.body{grid-template-columns:minmax(0,1fr)}}
+
+/* ============ panel ============ */
+.call{background:var(--night);color:var(--white);border-radius:28px;padding:10px}
+.plate{background:var(--plate);border-radius:20px;padding:18px 18px 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),inset 0 0 0 1px #1C1C1E}
+.c-top{display:flex;justify-content:space-between;align-items:baseline;padding:0 0 4px}
+.c-top b{font:400 26px/1 var(--f-serif);letter-spacing:.01em}
+.c-top span{font:500 11px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--rest)}
+.gh{display:flex;justify-content:space-between;font:500 10.5px/14px var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--rest);padding:22px 0 8px}
+.row{display:flex;align-items:center;gap:20px;min-height:68px;border-top:1px solid #222224;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.lab{flex:1;font:400 16px/22px var(--f-body);color:#8F8C94;transition:color .4s}
+.meta{font:500 12px/16px var(--f-mono);color:#6F6C74;text-align:right}
+.row input:checked ~ .lab{color:var(--white)}
+.ctl{flex:none;position:relative;display:block}
+.ctl svg{display:block;overflow:visible}
+.row:has(input:focus-visible) .ctl{outline:2px solid var(--lav);outline-offset:6px;border-radius:14px}
+.tg{width:112px;height:44px}.cb{width:40px;height:40px}.rd{width:40px;height:40px}
+.stops{position:relative}
+.stream{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:2}
+
+.hint{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin-top:10px}
+
+/* ============ spec ============ */
+.spec{background:var(--card);border:1px solid var(--line);font-family:var(--f-mono);font-size:12.5px;line-height:1.55}
+.spec-title{display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.spec section{padding:14px 16px;border-bottom:1px solid var(--line);min-width:0}
+.spec section:nth-child(odd){border-right:1px solid var(--line)}
+.spec .wide{grid-column:1/-1;border-right:0!important}
+.spec h4{margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+.spec dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 12px}
+.spec dt{color:var(--muted)}
+.spec dd{margin:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.phases{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.phases figure{margin:0;background:var(--night);border-radius:10px;padding:16px 6px 10px;display:grid;gap:10px;justify-items:center;color:#8F8C94;font-size:10px;letter-spacing:.08em;text-transform:uppercase;text-align:center}
+.beats{display:grid;gap:6px}
+.beat{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;align-items:center}
+.track{position:relative;height:14px;background:var(--line);border-radius:3px}
+.track i{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--fg)}
+.track i.l{background:linear-gradient(90deg,#FF6FA8,#C9A7FF)}
+.track i.m{background:repeating-linear-gradient(90deg,var(--fg) 0 1px,transparent 1px 4px)}
+.scale{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;color:var(--muted);font-size:11px}
+.scale div{display:flex;justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:10px 18px}
+.chip{display:flex;align-items:center;gap:8px}
+.chip i{width:22px;height:22px;border:1px solid var(--line);flex:none;border-radius:4px}
+@media (max-width:560px){.grid{grid-template-columns:minmax(0,1fr)}.spec section:nth-child(odd){border-right:0}.phases{grid-template-columns:repeat(2,minmax(0,1fr))}.beat,.scale{grid-template-columns:84px minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="liq" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF6FA8"/><stop offset=".55" stop-color="#C9A7FF"/><stop offset="1" stop-color="#F4E9FF"/></linearGradient>
+    <linearGradient id="liqR" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#FF6FA8"/><stop offset=".55" stop-color="#C9A7FF"/><stop offset="1" stop-color="#F4E9FF"/></linearGradient>
+    <linearGradient id="liqV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4E9FF"/><stop offset=".45" stop-color="#C9A7FF"/><stop offset="1" stop-color="#FF6FA8"/></linearGradient>
+    <radialGradient id="liqC" cx=".38" cy=".35" r=".75"><stop offset="0" stop-color="#F4E9FF"/><stop offset=".55" stop-color="#C9A7FF"/><stop offset="1" stop-color="#FF6FA8"/></radialGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.2"/></filter>
+    <filter id="haze" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4"/></filter>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+  <div class="body">
+    <div>
+      <div class="call"><div class="plate">
+        <div class="c-top"><b>Open Call</b><span>Portal · Sep 1–30</span></div>
+
+        <div class="gh"><span>Toggle · ring → ∞ → ring</span><span>off / on</span></div>
+        <label class="row"><input class="sr" type="checkbox" role="switch" id="t-accept" checked><span class="ctl tg" aria-hidden="true"></span><span class="lab">Accept submissions</span><span class="meta">142</span></label>
+        <label class="row"><input class="sr" type="checkbox" role="switch" id="t-digest"><span class="ctl tg" aria-hidden="true"></span><span class="lab">Daily digest</span><span class="meta">9 am</span></label>
+
+        <div class="gh"><span>Checkbox · [ include ]</span><span>media</span></div>
+        <label class="row"><input class="sr" type="checkbox" id="c-photo" checked><span class="ctl cb" aria-hidden="true"></span><span class="lab">Photography</span><span class="meta">58</span></label>
+        <label class="row"><input class="sr" type="checkbox" id="c-moving"><span class="ctl cb" aria-hidden="true"></span><span class="lab">Moving image</span><span class="meta">31</span></label>
+        <label class="row"><input class="sr" type="checkbox" id="c-sculpt"><span class="ctl cb" aria-hidden="true"></span><span class="lab">Sculpture</span><span class="meta">17</span></label>
+
+        <div class="gh" id="dl-h"><span>Radio · one pool of light</span><span>deadline</span></div>
+        <div class="stops" id="stops" role="radiogroup" aria-labelledby="dl-h">
+          <svg class="stream" id="stream" aria-hidden="true"></svg>
+          <label class="row"><input class="sr" type="radio" name="dl" id="d-15"><span class="ctl rd" aria-hidden="true"></span><span class="lab">September 15</span><span class="meta">early</span></label>
+          <label class="row"><input class="sr" type="radio" name="dl" id="d-30" checked><span class="ctl rd" aria-hidden="true"></span><span class="lab">September 30</span><span class="meta">standard</span></label>
+          <label class="row"><input class="sr" type="radio" name="dl" id="d-oct"><span class="ctl rd" aria-hidden="true"></span><span class="lab">October 15</span><span class="meta">late</span></label>
+        </div>
+      </div></div>
+      <div class="hint">Try: turn on Daily digest and watch the dotted ring stretch into ∞ and flow across, then gather on the right. Then pour the deadline from September 15 to October 15.</div>
+    </div>
+
+    <div class="spec" aria-label="Portal spec">
+      <div class="spec-title"><span>Spec · Portal</span><span>1 px = 1 pt</span></div>
+      <div class="grid">
+        <section class="wide"><h4>Toggle action · ring → ∞ → ring</h4>
+          <div class="phases">
+            <figure><span class="ctl tg" data-fixed="off"></span>1 · Closed (off)</figure>
+            <figure><span class="ctl tg" data-fixed="open"></span>2 · Ring stretches</figure>
+            <figure><span class="ctl tg" data-fixed="hold"></span>3 · ∞ flows</figure>
+            <figure><span class="ctl tg" data-fixed="on"></span>4 · Closed (on)</figure>
+          </div>
+        </section>
+        <section class="wide"><h4>Motion beats · toggle 1300 ms</h4>
+          <div class="beats">
+            <div class="scale"><span></span><div><span>0</span><span>325</span><span>650</span><span>975</span><span>1300 ms</span></div></div>
+            <div class="beat"><span>Open (lead arc)</span><div class="track"><i style="left:0;width:38%"></i></div></div>
+            <div class="beat"><span>Hold</span><div class="track"><i style="left:38%;width:17%;opacity:.35"></i></div></div>
+            <div class="beat"><span>Close (tail arc)</span><div class="track"><i style="left:55%;width:45%"></i></div></div>
+            <div class="beat"><span>Colour arrives</span><div class="track"><i class="l" style="left:60%;width:40%"></i></div></div>
+            <div class="beat"><span>Ring → ∞</span><div class="track"><i class="l" style="left:0;width:25%"></i></div></div>
+            <div class="beat"><span>∞ flows (1.25 loops)</span><div class="track"><i class="l" style="left:25%;width:47%;opacity:.6"></i></div></div>
+            <div class="beat"><span>∞ → ring</span><div class="track"><i class="l" style="left:72%;width:28%"></i></div></div>
+            <div class="beat"><span>Bead orbit</span><div class="track"><i style="left:0;width:100%;background:radial-gradient(circle,var(--fg) 1.5px,transparent 2px) 0 50%/8px 8px repeat-x"></i></div></div>
+          </div>
+        </section>
+        <section><h4>Type</h4><dl>
+          <dt>Label</dt><dd>Hanken Grotesk 400, 16 / 22, #8F8C94 rest · #F2F2F2 on</dd>
+          <dt>Group</dt><dd>Geist Mono 500, 10.5 / 14, +0.16em, uppercase</dd>
+          <dt>Meta</dt><dd>Geist Mono 500, 12 / 16, #6F6C74</dd>
+          <dt>Title</dt><dd>Instrument Serif 400, 26 / 26</dd>
+        </dl></section>
+        <section><h4>Spacing</h4><dl>
+          <dt>Panel</dt><dd>480 wide · bezel 10 · plate pad 18 / 18 / 10</dd>
+          <dt>Corner</dt><dd>bezel r 28 · plate r 20</dd>
+          <dt>Header</dt><dd>44 (22 above, 8 below)</dd>
+          <dt>Row</dt><dd>68 min · control→label 20</dd>
+          <dt>Divider</dt><dd>1 px #222224</dd>
+        </dl></section>
+        <section><h4>Toggle</h4><dl>
+          <dt>Track</dt><dd>112 × 44, r 22, 1 px #F2F2F2 @18% (very light)</dd>
+          <dt>Ring</dt><dd>2 arcs, r 20, stroke 1.6, 7 px gaps top / bottom</dd>
+          <dt>Travel</dt><dd>68 (ring centre 22 → 90)</dd>
+          <dt>Dots</dt><dd>22 × Ø2.7–3.9; ring r 14 at rest; grey off → liquid gradient on</dd>
+          <dt>∞ path</dt><dd>lemniscate, half-width 50, centre x 56, loops through both gates</dd>
+        </dl></section>
+        <section><h4>Checkbox</h4><dl>
+          <dt>Brackets</dt><dd>[ ] 40 × 40, stroke 1.6, arm 8</dd>
+          <dt>Open</dt><dd>each bracket out 6, hold, close</dd>
+          <dt>Fill</dt><dd>26 × 26, r 7, liquid</dd>
+          <dt>Check</dt><dd>stroke 2.2, #0B0B0C, drawn in</dd>
+        </dl></section>
+        <section><h4>Radio</h4><dl>
+          <dt>Ring</dt><dd>( ) r 16, stroke 1.6</dd>
+          <dt>Pool</dt><dd>Ø24 liquid + white haze, one per group</dd>
+          <dt>Pour</dt><dd>10 wide stream, head then tail</dd>
+          <dt>Action</dt><dd>old ring opens + empties, new ring opens + fills + closes</dd>
+        </dl></section>
+        <section><h4>Orbit beads</h4><dl>
+          <dt>Beads</dt><dd>12 toggle · 10 checkbox / radio, Ø2.2–3.6, #F2F2F2</dd>
+          <dt>Path</dt><dd>follows the outline, beads span 78% of it</dd>
+          <dt>Weave</dt><dd>±3 at rest → ±9 in action, crosses the line</dd>
+          <dt>Speed</dt><dd>0.18 rev/s hover · 1.28 rev/s action</dd>
+          <dt>Hover</dt><dd>45% opacity, fades in / out</dd>
+        </dl></section>
+        <section><h4>Easing</h4><dl>
+          <dt>Open</dt><dd>ease-in-out cubic</dd>
+          <dt>Close</dt><dd>ease-out back (overshoot 1.4)</dd>
+          <dt>Checkbox</dt><dd>800 ms</dd>
+          <dt>Radio</dt><dd>1000 ms</dd>
+        </dl></section>
+        <section class="wide"><h4>Color</h4><div class="chips">
+          <span class="chip"><i style="background:#0B0B0C"></i>Night #0B0B0C</span>
+          <span class="chip"><i style="background:#141415"></i>Plate #141415</span>
+          <span class="chip"><i style="background:#F2F2F2"></i>Line #F2F2F2</span>
+          <span class="chip"><i style="background:linear-gradient(90deg,#FF6FA8,#C9A7FF,#F4E9FF)"></i>Liquid #FF6FA8 → #C9A7FF → #F4E9FF</span>
+          <span class="chip"><i style="background:#8F8C94"></i>Label rest #8F8C94</span>
+        </div></section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var NS='http://www.w3.org/2000/svg';
+  var still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function el(tag,attrs,parent){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
+  function clamp(v){return v<0?0:v>1?1:v}
+  function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
+  function back(t){var c=1.4;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)}
+  function span(t,a,b){return clamp((t-a)/(b-a))}
+  var anims=[];
+  function run(dur,fn,done){if(still){fn(1);done&&done();return}var s=performance.now(),o={s:s,dur:dur,fn:fn,done:done};anims.push(o);if(anims.length===1)requestAnimationFrame(tick)}
+  function tick(now){for(var i=anims.length-1;i>=0;i--){var a=anims[i],t=clamp((now-a.s)/a.dur);a.fn(t);if(t>=1){anims.splice(i,1);a.done&&a.done()}}if(anims.length)requestAnimationFrame(tick)}
+  /* ---- orbit beads: dots circle the shape, weaving in and out through the line ---- */
+  var orbits=[], last=performance.now();
+  function makeOrbit(svg,n,shape){var g=el('g',{fill:'#F2F2F2'},svg),dots=[];for(var i=0;i<n;i++)dots.push(el('circle',{r:1.7,opacity:0},g));
+    var o={dots:dots,shape:shape,env:0,hov:0,hovT:0,spin:Math.random()};orbits.push(o);return o}
+  function stadium(sh,u){var L=sh.L,R=sh.R,r=sh.r,cy=sh.cy,len=R-L,P=2*len+2*Math.PI*r,d=((u%1)+1)%1*P;
+    if(d<len)return[L+d,cy-r,0,-1];d-=len;
+    if(d<Math.PI*r){var a=-Math.PI/2+d/r;return[R+r*Math.cos(a),cy+r*Math.sin(a),Math.cos(a),Math.sin(a)]}d-=Math.PI*r;
+    if(d<len)return[R-d,cy+r,0,1];d-=len;
+    var b=Math.PI/2+d/r;return[L+r*Math.cos(b),cy+r*Math.sin(b),Math.cos(b),Math.sin(b)]}
+  function orbitLoop(now){
+    var dt=Math.min(.05,(now-last)/1000);last=now;
+    for(var k=0;k<orbits.length;k++){var o=orbits[k];
+      o.hov+=(o.hovT-o.hov)*Math.min(1,dt*6);
+      var I=Math.max(o.env,o.hov*.45);
+      if(I<.01){if(o.shown){o.dots.forEach(function(d){d.setAttribute('opacity',0)});o.shown=false}continue}
+      o.shown=true; if(!still)o.spin+=dt*(.18+o.env*1.1);
+      var n=o.dots.length, sh=o.shape(), A=3+6*o.env;
+      for(var i=0;i<n;i++){var u=o.spin+i*(.78/n), p=stadium(sh,u), off=A*Math.cos(2*Math.PI*(i/n)+o.spin*2*Math.PI*1.6);
+        var d=o.dots[i];d.setAttribute('cx',p[0]+p[2]*off);d.setAttribute('cy',p[1]+p[3]*off);d.setAttribute('opacity',I);d.setAttribute('r',1.1+.7*I)}
+    }
+    requestAnimationFrame(orbitLoop);
+  }
+  requestAnimationFrame(orbitLoop);
+  function hover(row,o){row.addEventListener('mouseenter',function(){o.hovT=1});row.addEventListener('mouseleave',function(){o.hovT=0})}
+  function envelope(t,a,b){var x=span(t,a,b);return Math.min(1,Math.sin(Math.PI*x)*1.6)}
+
+  var LA='M -3.47 -19.7 A 20 20 0 0 0 -3.47 19.7', RA='M 3.47 -19.7 A 20 20 0 0 1 3.47 19.7';
+
+  /* ================= toggle: dotted ring → ∞ → dotted ring ================= */
+  var PINK=[255,111,168],LAV=[201,167,255],PALE=[244,233,255],GREY=[143,140,148];
+  function mix(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t]}
+  function liquid(t){return t<.5?mix(PINK,LAV,t*2):mix(LAV,PALE,(t-.5)*2)}
+  function rgb(c){return 'rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')'}
+  var togs=[];
+  function buildToggle(host){
+    var s=el('svg',{width:112,height:44,viewBox:'0 0 112 44'},host);
+    el('rect',{x:.75,y:.75,width:110.5,height:42.5,rx:21.25,fill:'none',stroke:'#F2F2F2','stroke-opacity':.18,'stroke-width':1},s);
+    var pool=el('circle',{cy:22,r:9,fill:'url(#liqC)',filter:'url(#soft)'},s);
+    var haze=el('circle',{cy:22,r:6,fill:'#FFFFFF',filter:'url(#haze)'},s);
+    var dg=el('g',{},s), N=22, dots=[];
+    for(var i=0;i<N;i++)dots.push(el('circle',{r:1.5},dg));
+    var gL=el('g',{},s), gR=el('g',{},s);
+    var aL=el('path',{d:LA,fill:'none',stroke:'#F2F2F2','stroke-width':1.6,'stroke-linecap':'round'},gL);
+    var aR=el('path',{d:RA,fill:'none',stroke:'#F2F2F2','stroke-width':1.6,'stroke-linecap':'round'},gR);
+    var st={L:22,R:22,f:0,w:0,c:22,spin:0,env:0,hov:0,hovT:0};
+    function draw(){
+      gL.setAttribute('transform','translate('+st.L+' 22)'); gR.setAttribute('transform','translate('+st.R+' 22)');
+      var op=.5+.5*st.f; aL.setAttribute('stroke-opacity',op); aR.setAttribute('stroke-opacity',op);
+      var pc=(st.L+st.R)/2, closed=1-st.w;
+      pool.setAttribute('cx',pc); pool.setAttribute('opacity',st.f*closed); haze.setAttribute('cx',pc); haze.setAttribute('opacity',st.f*closed*.8);
+      var a=50,m=56,r=14, rad=1.35+.6*Math.max(st.env,st.w);
+      for(var i=0;i<N;i++){
+        var th=2*Math.PI*i/N+st.spin, sn=Math.sin(th), cs=Math.cos(th), d=1+sn*sn;
+        var lx=m+a*cs/d, ly=22+a*sn*cs/d, cx=st.c+r*cs, cy=22+r*sn;
+        var x=cx+(lx-cx)*st.w, y=cy+(ly-cy)*st.w;
+        var col=mix(GREY,liquid(i/N),Math.max(st.f,st.w));
+        var dd=dots[i]; dd.setAttribute('cx',x); dd.setAttribute('cy',y); dd.setAttribute('r',rad); dd.setAttribute('fill',rgb(col));
+        dd.setAttribute('opacity',.55+.45*Math.max(st.f,st.w));
+      }
+    }
+    var t={st:st,draw:draw}; togs.push(t); return t;
+  }
+  (function hoverLoop(){var last=performance.now();function f(now){var dt=Math.min(.05,(now-last)/1000);last=now;
+    togs.forEach(function(t){var s=t.st;s.hov+=(s.hovT-s.hov)*Math.min(1,dt*6);if(s.hov>.01&&!s.busy&&!still){s.spin+=dt*.5*s.hov;t.draw()}});
+    requestAnimationFrame(f)}requestAnimationFrame(f)})();
+  document.querySelectorAll('.tg').forEach(function(host){
+    var T=buildToggle(host), st=T.st, fixed=host.dataset.fixed;
+    if(fixed){var F={off:{L:22,R:22,f:0,w:0,c:22},open:{L:22,R:90,f:.4,w:.55,c:22,spin:.6},hold:{L:22,R:90,f:.6,w:1,c:56,spin:1.4},on:{L:90,R:90,f:1,w:0,c:90}}[fixed];
+      for(var k in F)st[k]=F[k];T.draw();return}
+    var inp=host.previousElementSibling, row=host.closest('.row');
+    st.L=st.R=st.c=inp.checked?90:22; st.f=inp.checked?1:0; T.draw();
+    row.addEventListener('mouseenter',function(){st.hovT=1}); row.addEventListener('mouseleave',function(){st.hovT=0});
+    inp.addEventListener('change',function(){
+      var on=inp.checked, A=on?22:90, B=on?90:22, s0=st.spin, dir=on?1:-1, f0=st.f;
+      st.busy=true;
+      run(1300,function(t){
+        st.w=ease(span(t,0,.25))*(1-ease(span(t,.72,1)));
+        st.c=t<.5?A:B;
+        st.spin=s0+dir*2*Math.PI*1.25*ease(t);
+        var lead=ease(span(t,.05,.35)), tail=back(span(t,.62,1));
+        if(on){st.R=A+68*lead; st.L=A+68*tail}else{st.L=A-68*lead; st.R=A-68*tail}
+        st.f=on?ease(span(t,.6,1)):f0*(1-ease(span(t,0,.4)));
+        st.env=t>=1?0:Math.sin(Math.PI*t);
+        T.draw();
+      },function(){st.busy=false;st.w=0;st.c=B;st.L=st.R=B;T.draw()});
+    });
+  });
+
+  /* ================= checkbox ================= */
+  document.querySelectorAll('.cb').forEach(function(host){
+    var s=el('svg',{width:40,height:40,viewBox:'0 0 40 40'},host);
+    var fill=el('rect',{x:7,y:7,width:26,height:26,rx:7,fill:'url(#liq)',filter:'url(#soft)'},s);
+    var haze=el('circle',{cx:26,cy:14,r:7,fill:'#fff',filter:'url(#haze)'},s);
+    var chk=el('path',{d:'M13 20.5l4.6 4.6L27.5 15',fill:'none',stroke:'#0B0B0C','stroke-width':2.2,'stroke-linecap':'round','stroke-linejoin':'round',pathLength:1,'stroke-dasharray':'1 2'},s);
+    var bl=el('path',{d:'M10 2 H7 Q2 2 2 7 V33 Q2 38 7 38 H10',fill:'none',stroke:'#F2F2F2','stroke-width':1.6,'stroke-linecap':'round'},s);
+    var br=el('path',{d:'M30 2 H33 Q38 2 38 7 V33 Q38 38 33 38 H30',fill:'none',stroke:'#F2F2F2','stroke-width':1.6,'stroke-linecap':'round'},s);
+    var inp=host.previousElementSibling;
+    var corb=makeOrbit(s,10,function(){return {L:20,R:20,r:23,cy:20}}); hover(host.closest('.row'),corb);
+    function draw(o,f,c){bl.setAttribute('transform','translate('+(-o)+' 0)');br.setAttribute('transform','translate('+o+' 0)');
+      var sc=.4+.6*f;fill.setAttribute('opacity',f);fill.setAttribute('transform','translate(20 20) scale('+sc+') translate(-20 -20)');
+      haze.setAttribute('opacity',f*.7);chk.setAttribute('stroke-dashoffset',1-c);
+      var op=.5+.5*f;bl.setAttribute('stroke-opacity',op);br.setAttribute('stroke-opacity',op)}
+    draw(0,inp.checked?1:0,inp.checked?1:0);
+    inp.addEventListener('change',function(){
+      var on=inp.checked;
+      run(800,function(t){
+        corb.env=t>=1?0:envelope(t,0,1);
+        var o=6*ease(span(t,0,.32))*(1-back(span(t,.55,1)));
+        if(on)draw(o,ease(span(t,.12,.55)),ease(span(t,.45,.85)));
+        else draw(o,1-ease(span(t,.3,.75)),1-ease(span(t,0,.35)));
+      });
+    });
+  });
+
+  /* ================= radio: one pool ================= */
+  var stops=document.getElementById('stops'), stream=document.getElementById('stream');
+  var inputs=[].slice.call(stops.querySelectorAll('input')), rings=[];
+  inputs.forEach(function(inp){
+    var host=inp.nextElementSibling, s=el('svg',{width:40,height:40,viewBox:'0 0 40 40'},host);
+    var pool=el('circle',{cx:20,cy:20,r:12,fill:'url(#liqC)',filter:'url(#soft)'},s);
+    var haze=el('circle',{cx:17,cy:16,r:6,fill:'#fff',filter:'url(#haze)'},s);
+    var gL=el('g',{},s), gR=el('g',{},s);
+    var sc='translate(20 20) scale(.8)';
+    var aL=el('path',{d:LA,fill:'none',stroke:'#F2F2F2','stroke-width':2,'stroke-linecap':'round'},gL);
+    var aR=el('path',{d:RA,fill:'none',stroke:'#F2F2F2','stroke-width':2,'stroke-linecap':'round'},gR);
+    var r={inp:inp,host:host,orb:makeOrbit(s,10,function(){return {L:20,R:20,r:18,cy:20}}),draw:function(o,f){gL.setAttribute('transform','translate('+(20-o)+' 20) scale(.8)');gR.setAttribute('transform','translate('+(20+o)+' 20) scale(.8)');
+      pool.setAttribute('opacity',f);pool.setAttribute('r',6+6*f);haze.setAttribute('opacity',f*.8);
+      var op=.5+.5*f;aL.setAttribute('stroke-opacity',op);aR.setAttribute('stroke-opacity',op)}};
+    r.draw(0,inp.checked?1:0); rings.push(r); hover(host.closest('.row'),r.orb);
+  });
+  var sw=el('rect',{x:0,width:10,rx:5,fill:'url(#liqV)',filter:'url(#soft)',opacity:0},stream);
+  function cy(r){var c=stops.getBoundingClientRect(),b=r.host.getBoundingClientRect();return {x:b.left-c.left+20,y:b.top-c.top+20}}
+  function size(){var c=stops.getBoundingClientRect();stream.setAttribute('width',c.width);stream.setAttribute('height',c.height)}
+  size(); window.addEventListener('resize',size);
+  var cur=rings.filter(function(r){return r.inp.checked})[0];
+  rings.forEach(function(r){
+    r.inp.addEventListener('change',function(){
+      var from=cur, to=r; cur=r; if(from===to)return;
+      var a=cy(from), b=cy(to), down=b.y>a.y;
+      sw.setAttribute('x',a.x-5);
+      if(down){sw.setAttribute('fill','url(#liqV)')}
+      run(1000,function(t){
+        from.orb.env=t>=1?0:envelope(t,0,.55); to.orb.env=t>=1?0:envelope(t,.35,1);
+        // old ring: opens, empties, closes
+        from.draw(5*ease(span(t,0,.25))*(1-back(span(t,.45,.8))),1-ease(span(t,.05,.4)));
+        // stream: head then tail
+        var h=ease(span(t,.12,.55)), tl=ease(span(t,.32,.8)), y1=a.y+(b.y-a.y)*h, y0=a.y+(b.y-a.y)*tl;
+        var top=Math.min(y0,y1)-5, ht=Math.abs(y1-y0)+10;
+        sw.setAttribute('y',top);sw.setAttribute('height',ht);sw.setAttribute('opacity',t<.12||t>.82?0:.95);
+        sw.setAttribute('transform',down?'':'rotate(180 '+a.x+' '+(top+ht/2)+')');
+        // new ring: opens to receive, fills, closes
+        to.draw(5*ease(span(t,.3,.55))*(1-back(span(t,.65,1))),ease(span(t,.5,.85)));
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inchworm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600&family=Geist+Mono:wght@400;500&family=Geist:wght@400;500&display=swap">
+<style>
+/* Layout: one black "night" panel (the prototype) beside a spec sheet; the frame stays quiet so the light leads. */
+:root{
+  --bg:#EDEEF1; --fg:#0C0D10; --muted:#5D616C; --line:#D5D8DE; --card:#F7F8FA;
+  --night:#050608; --rail:#F2F4F7; --dim:#7E8494; --cyan:#18D4FF; --blue:#1E5BFF; --coral:#FF7A8A; --peach:#FFB199;
+  --f-display:"Unbounded","Arial Black",sans-serif;
+  --f-body:"Geist","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"Geist Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0B0C0F;--fg:#ECEEF2;--muted:#9096A3;--line:#22252C;--card:#121419;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0B0C0F;--fg:#ECEEF2;--muted:#9096A3;--line:#22252C;--card:#121419;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;margin:0}
+.wrap{max-width:1160px;margin:0 auto;padding-inline:clamp(16px,4vw,40px);padding-block:56px 80px}
+.sr{position:absolute;width:1px;height:1px;opacity:0;margin:0;pointer-events:none}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.head{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:20px 56px;align-items:end;padding-bottom:36px;border-bottom:1px solid var(--line);margin-bottom:36px}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(40px,6.4vw,76px);line-height:1;margin:10px 0 14px;letter-spacing:-.02em}
+.tone{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tone b{color:var(--fg);font-weight:500}
+.concept p{margin:0 0 12px;font-size:16.5px;line-height:1.55;max-width:60ch}
+.concept p:last-child{margin:0}
+.refs{font-family:var(--f-mono);font-size:12px;color:var(--muted);line-height:1.6}
+.body{display:grid;grid-template-columns:minmax(0,480px) minmax(0,1fr);gap:32px;align-items:start}
+@media (max-width:920px){.head,.body{grid-template-columns:minmax(0,1fr)}}
+
+/* ============ night panel ============ */
+.night{background:var(--night);color:#fff;border-radius:24px;padding:26px 26px 16px;overflow:hidden}
+.n-top{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:4px}
+.n-top b{font:600 15px/1 var(--f-display);letter-spacing:.02em}
+.n-top span{font:500 11px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.gh{display:flex;justify-content:space-between;font:500 10.5px/14px var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);padding:22px 0 8px}
+.row{display:flex;align-items:center;gap:20px;min-height:68px;border-top:1px solid #1B1E25;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.lab{flex:1;font:400 16px/22px var(--f-body);color:#9EA4B2;transition:color .3s}
+.meta{font:500 12px/16px var(--f-mono);color:var(--dim);text-align:right}
+.ctl{flex:none;position:relative}
+.row:has(input:focus-visible) .ctl{outline:2px solid var(--cyan);outline-offset:8px;border-radius:16px}
+.row input:checked ~ .lab{color:#fff}
+
+/* shared light body */
+.blob{position:absolute;border-radius:999px;overflow:hidden;box-shadow:0 0 18px rgba(24,212,255,.45);transition:box-shadow .5s}
+.blob::before,.blob::after{content:"";position:absolute;inset:0;transition:opacity .5s}
+.blob::before{background:radial-gradient(120% 140% at 30% 50%,#2A3FD0 0 30%,transparent 70%),linear-gradient(90deg,var(--blue),var(--cyan))}
+.blob::after{background:radial-gradient(120% 140% at 70% 50%,#FF5C7A 0 30%,transparent 70%),linear-gradient(90deg,var(--coral),var(--peach));opacity:0}
+.ring{position:absolute;border:1.5px solid rgba(255,255,255,.95);border-radius:50%;pointer-events:none}
+
+/* toggle */
+.tg{width:96px;height:28px}
+.tg .rail{position:absolute;inset:0;border-radius:14px;background:var(--rail)}
+.tg .blob{top:0;left:0;width:40px;height:28px}
+.tg .core{position:absolute;top:7px;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,#fff 0 2.5px,rgba(255,255,255,.25) 3px 4.5px,transparent 5px);z-index:2;left:13px}
+.tg .ring{width:40px;height:40px;top:-6px;left:0}
+.row input:checked + .tg .blob{left:56px;box-shadow:0 0 22px rgba(255,122,138,.6)}
+.row input:checked + .tg .blob::after{opacity:1}
+.row input:checked + .tg .core{left:69px}
+.row input:checked + .tg .ring{left:56px}
+
+/* checkbox */
+.cb{width:30px;height:30px}
+.cb .rail{position:absolute;inset:0;border-radius:10px;background:var(--rail)}
+.cb .blob{inset:0;border-radius:10px;clip-path:inset(0 100% 0 0 round 10px);transition:clip-path .5s cubic-bezier(.6,0,.2,1),box-shadow .5s;box-shadow:none}
+.cb .blob::before{opacity:1}
+.cb .ring{width:46px;height:46px;left:-8px;top:-8px;opacity:0;transform:scale(.6);transition:opacity .25s,transform .45s cubic-bezier(.3,1.5,.5,1)}
+.cb .bar{position:absolute;left:15px;top:15px;height:2px;border-radius:1px;background:var(--night);transform-origin:0 50%;z-index:2;transition:transform .5s cubic-bezier(.5,0,.2,1),width .5s cubic-bezier(.5,0,.2,1),background .3s}
+/* "+" : two bars centred; check: short + long stroke */
+.cb .a{width:12px;transform:translate(-6px,-1px) rotate(0deg)}
+.cb .b{width:12px;transform:translate(0,-7px) rotate(90deg) translate(0,-1px)}
+.row input:checked + .cb .blob{clip-path:inset(0 0 0 0 round 10px);box-shadow:0 0 18px rgba(24,212,255,.5)}
+.row input:checked + .cb .ring{opacity:1;transform:scale(1)}
+.row input:checked + .cb .bar{background:#fff}
+.row input:checked + .cb .a{width:7px;transform:translate(-7px,0) rotate(45deg)}
+.row input:checked + .cb .b{width:13px;transform:translate(-2px,5px) rotate(-50deg)}
+
+/* radio — one light on a vertical rail */
+.stops{position:relative}
+.stops .slot{width:40px;height:44px;display:grid;place-items:center}
+.vrail{position:absolute;left:6px;width:28px;border-radius:14px;background:var(--rail)}
+.notch{width:6px;height:6px;border-radius:50%;background:#C3C8D2;position:relative;z-index:1}
+.vblob{position:absolute;left:6px;width:28px;border-radius:14px;z-index:2;transition:filter .6s}
+.vblob .core{position:absolute;z-index:2;left:7px;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,#fff 0 2.5px,rgba(255,255,255,.25) 3px 4.5px,transparent 5px);top:50%;margin-top:-7px}
+.vblob.coral::after{opacity:1}.vblob.coral{box-shadow:0 0 22px rgba(255,122,138,.6)}
+.vring{position:absolute;left:-4px;width:48px;height:48px;z-index:3}
+
+.hint{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin-top:10px}
+
+/* ============ spec ============ */
+.spec{background:var(--card);border:1px solid var(--line);font-family:var(--f-mono);font-size:12.5px;line-height:1.55}
+.spec-title{display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.spec section{padding:14px 16px;border-bottom:1px solid var(--line);min-width:0}
+.spec section:nth-child(odd){border-right:1px solid var(--line)}
+.spec .wide{grid-column:1/-1;border-right:0!important}
+.spec h4{margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+.spec dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 12px}
+.spec dt{color:var(--muted)}
+.spec dd{margin:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.gait{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.gait figure{margin:0;background:var(--night);border-radius:10px;padding:16px 12px 10px;display:grid;gap:10px;justify-items:center;color:#9EA4B2;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+.gait .r{position:relative;width:96px;height:28px;border-radius:14px;background:#F2F4F7}
+.gait .b{position:absolute;top:0;height:28px;border-radius:14px;background:linear-gradient(90deg,#1E5BFF,#18D4FF)}
+.gait .b.c{background:linear-gradient(90deg,#FF7A8A,#FFB199)}
+.gait .o{position:absolute;top:-6px;width:40px;height:40px;border-radius:50%;border:1.5px solid #fff}
+.beats{display:grid;gap:6px}
+.beat{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;align-items:center}
+.track{position:relative;height:14px;background:var(--line);border-radius:3px}
+.track i{position:absolute;top:0;bottom:0;border-radius:3px;background:#1E5BFF}
+.track i.h{background:#FF7A8A}.track i.w{background:var(--muted)}
+.scale{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;color:var(--muted);font-size:11px}
+.scale div{display:flex;justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:10px 18px}
+.chip{display:flex;align-items:center;gap:8px}
+.chip i{width:22px;height:22px;border:1px solid var(--line);flex:none;border-radius:4px}
+@media (max-width:560px){.grid{grid-template-columns:minmax(0,1fr)}.spec section:nth-child(odd){border-right:0}.gait{grid-template-columns:minmax(0,1fr)}.beat,.scale{grid-template-columns:84px minmax(0,1fr)}}
+@media (prefers-reduced-motion: reduce){*{transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="body">
+    <div>
+      <div class="night">
+        <div class="n-top"><b>Light Walk</b><span>Night festival · gate 3</span></div>
+
+        <div class="gh"><span>Toggle · crawl</span><span>off / on</span></div>
+        <label class="row"><input class="sr crawl" type="checkbox" role="switch" id="t-audio" checked><span class="ctl tg" aria-hidden="true"><span class="rail"></span><span class="blob"></span><span class="core"></span><span class="ring"></span></span><span class="lab">Audio guide</span></label>
+        <label class="row"><input class="sr crawl" type="checkbox" role="switch" id="t-glow"><span class="ctl tg" aria-hidden="true"><span class="rail"></span><span class="blob"></span><span class="core"></span><span class="ring"></span></span><span class="lab">Glow wristband</span></label>
+
+        <div class="gh"><span>Checkbox · fill + fold</span><span>stops</span></div>
+        <label class="row"><input class="sr" type="checkbox" id="c-lantern" checked><span class="ctl cb" aria-hidden="true"><span class="rail"></span><span class="blob"></span><span class="bar a"></span><span class="bar b"></span><span class="ring"></span></span><span class="lab">Lantern hall</span><span class="meta">12 min</span></label>
+        <label class="row"><input class="sr" type="checkbox" id="c-river"><span class="ctl cb" aria-hidden="true"><span class="rail"></span><span class="blob"></span><span class="bar a"></span><span class="bar b"></span><span class="ring"></span></span><span class="lab">River projections</span><span class="meta">20 min</span></label>
+        <label class="row"><input class="sr" type="checkbox" id="c-maze"><span class="ctl cb" aria-hidden="true"><span class="rail"></span><span class="blob"></span><span class="bar a"></span><span class="bar b"></span><span class="ring"></span></span><span class="lab">Mirror maze</span><span class="meta">15 min</span></label>
+
+        <div class="gh" id="pace-h"><span>Radio · one light, one rail</span><span>pace</span></div>
+        <div class="stops" id="stops" role="radiogroup" aria-labelledby="pace-h">
+          <span class="vrail" id="vrail" aria-hidden="true"></span>
+          <span class="vblob blob" id="vblob" aria-hidden="true"><span class="core"></span></span>
+          <span class="ring vring" id="vring" aria-hidden="true"></span>
+          <label class="row"><input class="sr" type="radio" name="pace" id="p-stroll" data-hue="0"><span class="ctl slot" aria-hidden="true"><span class="notch"></span></span><span class="lab">Stroll</span><span class="meta">60 min</span></label>
+          <label class="row"><input class="sr" type="radio" name="pace" id="p-wander" data-hue="45" checked><span class="ctl slot" aria-hidden="true"><span class="notch"></span></span><span class="lab">Wander</span><span class="meta">40 min</span></label>
+          <label class="row"><input class="sr" type="radio" name="pace" id="p-dash" data-hue="0" data-coral="1"><span class="ctl slot" aria-hidden="true"><span class="notch"></span></span><span class="lab">Dash</span><span class="meta">20 min</span></label>
+        </div>
+      </div>
+      <div class="hint">Try: switch Glow wristband on and watch the head reach out before the tail follows. Then move the pace from Stroll to Dash.</div>
+    </div>
+
+    <div class="spec" aria-label="Inchworm spec">
+      <div class="spec-title"><span>Spec · Inchworm v3</span><span>1 px = 1 pt</span></div>
+      <div class="grid">
+        <section class="wide"><h4>Gait · how the light moves</h4>
+          <div class="gait">
+            <figure><span class="r"><span class="b" style="left:0;width:40px"></span><span class="o" style="left:56px"></span></span>1 · ring scouts ahead</figure>
+            <figure><span class="r"><span class="b" style="left:0;width:96px"></span><span class="o" style="left:56px"></span></span>2 · head reaches</figure>
+            <figure><span class="r"><span class="b c" style="left:56px;width:40px"></span><span class="o" style="left:56px"></span></span>3 · tail pulls in</figure>
+          </div>
+        </section>
+        <section class="wide"><h4>Motion beats</h4>
+          <div class="beats">
+            <div class="scale"><span></span><div><span>0</span><span>200</span><span>400</span><span>600</span><span>800 ms</span></div></div>
+            <div class="beat"><span>Ring scouts</span><div class="track"><i class="w" style="left:0;width:40%"></i></div></div>
+            <div class="beat"><span>Head reaches</span><div class="track"><i style="left:5%;width:33.75%"></i></div></div>
+            <div class="beat"><span>Tail pulls in</span><div class="track"><i style="left:38.75%;width:41.25%"></i></div></div>
+            <div class="beat"><span>Color shift</span><div class="track"><i class="h" style="left:20%;width:62.5%"></i></div></div>
+            <div class="beat"><span>+ folds to ✓</span><div class="track"><i class="h" style="left:0;width:62.5%"></i></div></div>
+          </div>
+        </section>
+        <section><h4>Type</h4><dl>
+          <dt>Label</dt><dd>Geist 400, 16 / 22, #9EA4B2</dd>
+          <dt>Selected</dt><dd>Geist 400, #FFFFFF</dd>
+          <dt>Group</dt><dd>Geist Mono 500, 10.5 / 14, +0.16em, uppercase</dd>
+          <dt>Meta</dt><dd>Geist Mono 500, 12 / 16</dd>
+          <dt>Title</dt><dd>Unbounded 600, 15 / 15</dd>
+        </dl></section>
+        <section><h4>Spacing</h4><dl>
+          <dt>Panel pad</dt><dd>26 sides · 26 top · 16 bottom</dd>
+          <dt>Corner</dt><dd>panel r 24</dd>
+          <dt>Row height</dt><dd>68 min</dd>
+          <dt>Control→label</dt><dd>20</dd>
+          <dt>Divider</dt><dd>1 px #1B1E25</dd>
+        </dl></section>
+        <section><h4>Toggle</h4><dl>
+          <dt>Rail</dt><dd>96 × 28, r 14, #F2F4F7</dd>
+          <dt>Light</dt><dd>40 × 28 at rest, 96 × 28 mid-crawl</dd>
+          <dt>Core</dt><dd>Ø5 white + Ø9 halo @25%</dd>
+          <dt>Ring</dt><dd>Ø40, stroke 1.5 white, 6 outside rail</dd>
+          <dt>Off / on</dt><dd>blue → cyan · coral → peach</dd>
+        </dl></section>
+        <section><h4>Checkbox</h4><dl>
+          <dt>Box</dt><dd>30 × 30, r 10, #F2F4F7</dd>
+          <dt>Fill</dt><dd>left → right wipe, r 10</dd>
+          <dt>Glyph</dt><dd>2 bars, 2 px: + (12/12) → ✓ (7 @45°, 13 @−50°)</dd>
+          <dt>Ring</dt><dd>Ø46, scale .6 → 1</dd>
+        </dl></section>
+        <section><h4>Radio</h4><dl>
+          <dt>Rail</dt><dd>28 wide, runs stop 1 → stop 3, r 14</dd>
+          <dt>Stop</dt><dd>Ø6 notch #C3C8D2</dd>
+          <dt>Light</dt><dd>28 × 44 at rest, one per group</dd>
+          <dt>Ring</dt><dd>Ø48</dd>
+          <dt>Color</dt><dd>Stroll blue · Wander violet (hue +45°) · Dash coral</dd>
+        </dl></section>
+        <section><h4>Easing</h4><dl>
+          <dt>Ring</dt><dd>320 ms, (.3,1.4,.5,1)</dd>
+          <dt>Head</dt><dd>270 ms, (.5,0,.2,1)</dd>
+          <dt>Tail</dt><dd>330 ms, (.6,0,.25,1.15)</dd>
+          <dt>Fold</dt><dd>500 ms, (.5,0,.2,1)</dd>
+          <dt>Color</dt><dd>500 ms crossfade</dd>
+        </dl></section>
+        <section class="wide"><h4>Color</h4><div class="chips">
+          <span class="chip"><i style="background:#050608"></i>Night #050608</span>
+          <span class="chip"><i style="background:#F2F4F7"></i>Rail #F2F4F7</span>
+          <span class="chip"><i style="background:linear-gradient(90deg,#1E5BFF,#18D4FF)"></i>Rest #1E5BFF → #18D4FF</span>
+          <span class="chip"><i style="background:linear-gradient(90deg,#FF7A8A,#FFB199)"></i>On #FF7A8A → #FFB199</span>
+          <span class="chip"><i style="background:#9EA4B2"></i>Label #9EA4B2</span>
+          <span class="chip"><i style="background:#7E8494"></i>Dim #7E8494</span>
+        </div></section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var can = !!Element.prototype.animate && !still;
+
+  /* ---- toggle: inchworm crawl ---- */
+  document.querySelectorAll('.crawl').forEach(function(sw){
+    var t=sw.nextElementSibling, blob=t.querySelector('.blob'), core=t.querySelector('.core'), ring=t.querySelector('.ring');
+    sw.addEventListener('change',function(){
+      if(!can) return;
+      var on=sw.checked, A=on?0:56, B=on?56:0;
+      ring.animate([{left:A+'px',transform:'scale(1)'},{left:B+'px',transform:'scale(1.25)',offset:.6},{left:B+'px',transform:'scale(1)'}],{duration:320,easing:'cubic-bezier(.3,1.4,.5,1)'});
+      blob.animate([
+        {left:A+'px',width:'40px',easing:'cubic-bezier(.5,0,.2,1)'},
+        {left:'0px',width:'96px',offset:.45,easing:'cubic-bezier(.6,0,.25,1.15)'},
+        {left:B+'px',width:'40px'}],{duration:600,delay:40});
+      core.animate([{left:(A+13)+'px'},{left:'41px',offset:.45},{left:(B+13)+'px'}],{duration:600,delay:40,easing:'ease-in-out'});
+    });
+  });
+
+  /* ---- radio: one light on a vertical rail ---- */
+  var stops=document.getElementById('stops'), rail=document.getElementById('vrail'), vb=document.getElementById('vblob'), vr=document.getElementById('vring');
+  var inputs=[].slice.call(stops.querySelectorAll('input')), cur=stops.querySelector('input:checked');
+  function cy(inp){var s=inp.nextElementSibling, c=stops.getBoundingClientRect(), r=s.getBoundingClientRect();return r.top-c.top+r.height/2}
+  function layout(){
+    var y0=cy(inputs[0]), y1=cy(inputs[inputs.length-1]);
+    rail.style.top=(y0-22)+'px'; rail.style.height=(y1-y0+44)+'px';
+    var y=cy(cur); vb.style.top=(y-22)+'px'; vb.style.height='44px'; vr.style.top=(y-24)+'px';
+    vb.style.filter='hue-rotate('+cur.dataset.hue+'deg)'; vb.classList.toggle('coral',!!cur.dataset.coral);
+  }
+  layout(); window.addEventListener('resize',layout);
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(layout);
+  inputs.forEach(function(inp){
+    inp.addEventListener('change',function(){
+      var a=cy(cur), b=cy(inp); cur=inp; layout();
+      if(!can) return;
+      var top=Math.min(a,b)-22, span=Math.abs(b-a)+44, dur=480+Math.abs(b-a)*2;
+      vr.animate([{top:(a-24)+'px',transform:'scale(1)'},{top:(b-24)+'px',transform:'scale(1.2)',offset:.6},{top:(b-24)+'px',transform:'scale(1)'}],{duration:360,easing:'cubic-bezier(.3,1.4,.5,1)'});
+      vb.animate([
+        {top:(a-22)+'px',height:'44px',easing:'cubic-bezier(.5,0,.2,1)'},
+        {top:top+'px',height:span+'px',offset:.45,easing:'cubic-bezier(.6,0,.25,1.15)'},
+        {top:(b-22)+'px',height:'44px'}],{duration:dur,delay:40});
+    });
+  });
+})();
+</script>
+</body>
+</html>
