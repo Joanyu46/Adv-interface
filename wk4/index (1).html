@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Advanced Interface — Joan Yu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: an index of weekly studies; each week is a row of live previews you can open full size. */
+:root{
+  --bg:#ECEDF0; --fg:#15171C; --muted:#5D6371; --line:#CDD1D9; --card:#FFFFFF;
+  --font-ui:"Schibsted Grotesk", system-ui, sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root{ --bg:#0F1014; --fg:#E9EBEF; --muted:#969CAA; --line:#2A2D36; --card:#17191F; color-scheme:dark } }
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg); color:var(--fg); font:15px/1.5 var(--font-ui);
+  padding:48px max(16px, env(safe-area-inset-left,0px)) 80px max(16px, env(safe-area-inset-right,0px))}
+main{max-width:1180px; margin:0 auto; display:grid; gap:56px}
+a{color:inherit}
+
+header{display:grid; gap:12px; max-width:720px}
+.eyebrow{font:500 12px/1 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+h1{margin:0; font-weight:800; font-size:clamp(40px,7vw,72px); line-height:.95; letter-spacing:-.03em}
+.meta{display:flex; flex-wrap:wrap; gap:6px 20px; font:400 12px/1.4 var(--font-mono); color:var(--muted)}
+
+.week{display:grid; gap:20px}
+.week-head{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:8px 20px; border-top:1px solid var(--line); padding-top:20px}
+.week-head h2{margin:0; font-size:26px; font-weight:800; letter-spacing:-.01em}
+.week-head h2 span{font:500 12px/1 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-right:12px; vertical-align:middle}
+.week-head p{margin:0; color:var(--muted); max-width:60ch; flex-basis:100%}
+.week-head a.all{font:500 12px/1 var(--font-mono); letter-spacing:.06em; text-decoration:none; border:1px solid var(--line); border-radius:999px; padding:8px 12px}
+.week-head a.all:hover{border-color:var(--fg)}
+
+.grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:20px}
+.work{background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; display:grid; grid-template-rows:auto 1fr; min-width:0}
+.work-info{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 16px}
+.work-info h3{margin:0; font-size:17px; font-weight:600}
+.work-info .tone{font:500 11px/1 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); display:block; margin-top:4px}
+.work-info a{font:500 12px/1 var(--font-mono); text-decoration:none; border-radius:999px; padding:8px 12px; background:var(--fg); color:var(--bg); white-space:nowrap}
+.preview{position:relative; height:520px; border-top:1px solid var(--line); overflow:hidden}
+.preview iframe{position:absolute; top:0; left:0; width:166.667%; height:166.667%; border:0; transform:scale(.6); transform-origin:0 0}
+a:focus-visible{outline:2px solid var(--fg); outline-offset:3px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">ArtCenter · Interaction Design · Fall 2026</div>
+    <h1>Advanced Interface</h1>
+    <div class="meta"><span>Joan Yu</span><span>Instructor: Dan Park</span></div>
+  </header>
+
+  <!-- To add another week: copy one <section class="week"> block, change the title,
+       and point each card's iframe src and link href at that week's HTML file. -->
+
+  <section class="week" aria-labelledby="w4">
+    <div class="week-head">
+      <h2 id="w4"><span>Week 4</span>Sliders</h2>
+      <a class="all" href="week4-all.html">Open all three on one page →</a>
+      <p>Three sets, each with a stepped and a continuous slider. Every slider shows its value while dragging and has hover, pressed and drag states. Specs sit under each set.</p>
+    </div>
+    <div class="grid">
+      <article class="work">
+        <div class="work-info">
+          <div><h3>Set 1 · Curtain</h3><span class="tone">Tone: Ethereal</span></div>
+          <a href="week4-curtain.html">Open</a>
+        </div>
+        <div class="preview"><iframe src="week4-curtain.html" title="Curtain sliders preview" loading="lazy"></iframe></div>
+      </article>
+      <article class="work">
+        <div class="work-info">
+          <div><h3>Set 2 · Tempo</h3><span class="tone">Tone: Energetic</span></div>
+          <a href="week4-tempo.html">Open</a>
+        </div>
+        <div class="preview"><iframe src="week4-tempo.html" title="Tempo sliders preview" loading="lazy"></iframe></div>
+      </article>
+      <article class="work">
+        <div class="work-info">
+          <div><h3>Set 3 · Glow</h3><span class="tone">Tone: Playful</span></div>
+          <a href="week4-glow.html">Open</a>
+        </div>
+        <div class="preview"><iframe src="week4-glow.html" title="Glow sliders preview" loading="lazy"></iframe></div>
+      </article>
+    </div>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Glow Sliders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Unbounded:wght@500;600;700&family=Bodoni+Moda:ital,opsz,wght@1,6..96,500&family=Chakra+Petch:wght@500;700&family=JetBrains+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: one column of three "proof sheets"; each sheet commits to its own print world, the page around them stays quiet. */
+:root{
+  --bg:#ECEEF2; --fg:#15171C; --muted:#5A6070; --line:#C8CCD6; --chip:#FFFFFF;
+  --font-ui:"Schibsted Grotesk", system-ui, sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#0F1115; --fg:#E8EAEF; --muted:#959CAB; --line:#2A2E38; --chip:#1A1D24; color-scheme:dark } }
+:root[data-theme="dark"]{ --bg:#0F1115; --fg:#E8EAEF; --muted:#959CAB; --line:#2A2E38; --chip:#1A1D24; color-scheme:dark }
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--bg); color:var(--fg); font-family:var(--font-ui); font-size:15px; line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px)); padding-block:40px 64px}
+main{max-width:1080px; margin:0 auto; display:grid; gap:40px}
+
+header.top{display:grid; gap:14px; max-width:720px}
+.eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+h1{font-weight:800; font-size:clamp(44px,8vw,84px); line-height:.95; letter-spacing:-.03em; margin:0; text-wrap:balance}
+.lede{margin:0; color:var(--muted); max-width:62ch}
+.meta{display:flex; flex-wrap:wrap; gap:6px 18px; font-family:var(--font-mono); font-size:12px; color:var(--muted)}
+
+/* --- sheet --- */
+.set{--pad:clamp(20px,4vw,36px); background:var(--s-bg); color:var(--s-ink); padding:var(--pad); display:grid; gap:28px; border-radius:6px; overflow:hidden; position:relative}
+.set-head{display:flex; flex-wrap:wrap; align-items:end; justify-content:flex-end; gap:16px}
+.set-title{display:grid; gap:4px}
+.set-title .no{font-family:var(--font-mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; opacity:.7}
+.set-title h2{margin:0; font-family:var(--s-font); font-size:var(--s-h2,44px); line-height:1; font-weight:var(--s-w,400); letter-spacing:var(--s-ls,0)}
+.set-title p{margin:6px 0 0; max-width:48ch; font-size:14px; opacity:.8}
+
+.force{display:flex; gap:2px; padding:3px; border:1px solid var(--s-dim); border-radius:999px; font-family:var(--font-mono); font-size:11px}
+.force button{all:unset; cursor:pointer; padding:6px 11px; border-radius:999px; color:var(--s-ink); opacity:.7; letter-spacing:.04em}
+.force button[aria-pressed="true"]{background:var(--s-ink); color:var(--s-bg); opacity:1}
+.force button:focus-visible{outline:2px solid var(--s-ink); outline-offset:2px}
+
+.pair{display:grid; grid-template-columns:1fr; gap:40px}
+@media (max-width:760px){ .pair{grid-template-columns:1fr} }
+.sl{display:grid; gap:8px; min-width:0; border-radius:4px; outline:none}
+html.kbd .sl:focus-visible{outline:1px dashed var(--s-dim); outline-offset:6px}
+.sl-head{display:flex; justify-content:space-between; align-items:end; gap:12px}
+.sl-name{display:grid; gap:2px}
+.sl-name b{font-size:11px; line-height:16px; letter-spacing:.12em; text-transform:uppercase; font-weight:600}
+.sl-name span{font-size:13px; opacity:.7}
+.sl-val{font-family:var(--s-font); font-size:40px; line-height:44px; font-weight:var(--s-w,400); font-variant-numeric:tabular-nums; white-space:nowrap}
+.sl canvas{display:block; width:100%; height:150px; touch-action:none; cursor:grab}
+.sl canvas.grabbing{cursor:grabbing}
+
+.spec{border-top:1px solid var(--s-dim); padding-top:20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px 28px; font-family:var(--font-mono); font-size:12px; line-height:18px}
+.spec h3{grid-column:1/-1; margin:0; font-family:var(--font-mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:500; opacity:.7}
+.spec dl{margin:0; display:grid; gap:6px; min-width:0}
+.spec dt{opacity:.6; text-transform:uppercase; font-size:10.5px; letter-spacing:.08em}
+.spec dd{margin:0 0 8px}
+.sw{display:inline-block; width:10px; height:10px; border-radius:50%; vertical-align:-1px; margin-right:6px; box-shadow:0 0 0 1px var(--s-dim)}
+
+/* set worlds (deliberately single-look, colors explicit) */
+.set-b{--s-bg:#F2F2F7; --s-ink:#1C1C1E; --s-dim:rgba(60,60,67,.18); --s-font:Anton, Impact, "Arial Narrow", sans-serif; --s-h2:56px; --s-ls:.01em}
+.set-b .sl-val{color:#007AFF}
+.set-b.glass{--s-bg:#7E7E7E; --s-ink:#F5F5F5; --s-dim:rgba(255,255,255,.3); background:linear-gradient(160deg,#8C8C8C,#686868)}
+.set-b.glass .sl-val{color:rgba(255,255,255,.78)}
+.set-b .tools{display:flex; flex-wrap:wrap; gap:8px}
+/* ---- Set E: Tempo (black, orange pill) ---- */
+.set-e{--s-bg:#050505; --s-ink:#F2EFEA; --s-dim:rgba(242,239,234,.18); --s-font:Unbounded, "Arial Black", sans-serif; --or1:#FF3B00; --or2:#FF8C1A; --cream:#EEEBE6; --peach:#F3D3C0}
+.e-panel{background:#0E0E0D; border:1px solid rgba(242,239,234,.07); border-radius:20px; padding:clamp(18px,3vw,28px); display:grid; gap:20px}
+.e-top{display:flex; justify-content:space-between; align-items:center; gap:12px}
+.chip{font:500 11px/1 var(--font-mono); padding:6px 11px; border:1px solid rgba(242,239,234,.16); border-radius:999px; background:rgba(242,239,234,.04); color:rgba(242,239,234,.8)}
+.badge{font:600 10px/1 var(--font-mono); letter-spacing:.12em; padding:6px 9px; border-radius:7px; border:1px solid rgba(242,239,234,.22); color:rgba(242,239,234,.7); transition:background .2s, color .2s, border-color .2s}
+.badge.hover,.badge.pressed{border-color:#F2EFEA; color:#F2EFEA}
+.badge.drag{background:var(--or1); border-color:var(--or1); color:#0B0B0B}
+.e-head{display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap}
+.e-label{font:500 11px/1 var(--font-mono); letter-spacing:.16em; color:rgba(242,239,234,.55); display:flex; gap:8px; align-items:center; margin-bottom:10px}
+.e-label i{width:5px; height:5px; border-radius:50%; background:rgba(242,239,234,.25); transition:background .2s}
+.e-panel.is-drag .e-label i{background:var(--or1)}
+.e-numrow{display:flex; align-items:baseline; gap:10px}
+.e-num{font:600 clamp(44px,7vw,60px)/1 var(--s-font); letter-spacing:-.02em; font-variant-numeric:tabular-nums; display:inline-block}
+.e-num.roll{animation:eroll .32s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes eroll{from{transform:translateY(10px); opacity:.25} to{transform:none; opacity:1}}
+.e-unit{font:500 11px/1 var(--font-mono); letter-spacing:.12em; color:rgba(242,239,234,.45)}
+.e-name{font:700 18px/1.2 var(--font-ui); margin-bottom:6px}
+.e-stage{position:relative; height:132px}
+.e-track{position:absolute; left:0; right:0; top:50%; height:32px; margin-top:-16px; border-radius:16px; background:linear-gradient(180deg,#F8F6F2,#E4E0D9); box-shadow:inset 0 2px 3px rgba(0,0,0,.14), inset 0 -2px 2px rgba(255,255,255,.75), 0 14px 30px rgba(0,0,0,.6); cursor:pointer; touch-action:none; outline:none; z-index:1}
+html.kbd .e-track:focus-visible{outline:2px dashed var(--or2); outline-offset:5px}
+.e-fill{position:absolute; left:0; top:0; bottom:0; width:0; border-radius:16px; background:linear-gradient(180deg,#F9DFCF,#EEC2A6); box-shadow:inset 0 2px 3px rgba(150,60,10,.18), inset 0 -2px 2px rgba(255,255,255,.5)}
+.e-stop{position:absolute; top:50%; width:5px; height:5px; margin:-2.5px 0 0 -2.5px; border-radius:50%; background:#BDB6AC}
+.e-thumb{position:absolute; top:50%; left:0; width:84px; height:26px; margin:-13px 0 0 -42px; border-radius:13px; background:linear-gradient(90deg,var(--or1),var(--or2)); box-shadow:0 4px 16px rgba(255,80,0,.5), inset 0 1px 0 rgba(255,255,255,.35); color:#fff; cursor:grab; overflow:hidden; isolation:isolate; transition:transform .2s cubic-bezier(.3,1.4,.5,1), box-shadow .25s}
+.e-thumb::before{content:""; position:absolute; right:2px; top:2px; width:22px; height:22px; border-radius:11px; background:#0B0B0B; z-index:-1; transition:width .38s cubic-bezier(.65,0,.25,1)}
+.e-tv{position:absolute; left:0; right:24px; top:0; line-height:26px; text-align:center; font:700 12px/26px var(--font-mono); font-variant-numeric:tabular-nums}
+.e-cap{position:absolute; right:2px; top:2px; width:22px; height:22px; display:grid; place-items:center; color:var(--or2); transition:transform .38s cubic-bezier(.65,0,.25,1)}
+.e-cap svg{width:12px; height:12px}
+.e-panel.is-hover .e-thumb{box-shadow:0 0 0 0 transparent, 0 4px 22px rgba(255,80,0,.6), inset 0 1px 0 rgba(255,255,255,.35)}
+.e-panel.is-hover .e-thumb::before{width:80px}
+.e-panel.is-hover .e-cap{transform:translateX(2px)}
+.e-panel.is-pressed .e-thumb{transform:scale(.9); cursor:grabbing}
+.e-panel.is-pressed .e-thumb::before{width:80px}
+.e-panel.is-drag .e-thumb{transform:scale(1.08); box-shadow:0 6px 30px rgba(255,80,0,.95), inset 0 1px 0 rgba(255,255,255,.35); cursor:grabbing}
+.e-panel.is-drag .e-thumb::before{width:22px}
+.e-rim{position:absolute; left:-2px; right:-2px; top:50%; height:36px; margin-top:-18px; border-radius:18px; pointer-events:none; opacity:.35; transition:opacity .3s;
+  background:radial-gradient(110px 46px at var(--mx,50%) 50%, rgba(255,255,255,.95), rgba(255,170,110,.55) 38%, transparent 70%)}
+.e-rim.soft{filter:blur(14px); opacity:.15}
+.e-panel.is-hover .e-rim, .e-panel.is-drag .e-rim, .e-panel.is-pressed .e-rim{opacity:1}
+.e-panel.is-hover .e-rim.soft, .e-panel.is-drag .e-rim.soft, .e-panel.is-pressed .e-rim.soft{opacity:.55}
+.e-panel{background:radial-gradient(420px 220px at var(--px,50%) 60%, rgba(255,140,60,.07), transparent 70%), #0E0E0D}
+.e-ghost{position:absolute; top:50%; left:0; display:flex; align-items:center; gap:6px; transform:translateY(-50%); opacity:0; transition:opacity .15s; pointer-events:none}
+.e-ghost i{width:13px; height:13px; margin-left:-6.5px; border-radius:50%; border:3px solid var(--or1); background:#fff}
+.e-ghost span{font:600 11px/1 var(--font-mono); color:#FF8A5C}
+.e-anno{position:absolute; opacity:0; transform:translateY(4px); transition:opacity .2s, transform .25s; font:600 10px/1.35 var(--font-mono); letter-spacing:.1em; color:#F2EFEA; pointer-events:none; white-space:nowrap}
+.e-panel.is-drag .e-anno{opacity:1; transform:none}
+.e-ms{bottom:calc(50% + 26px)}
+.e-ms .brk{display:block; width:62px; height:6px; border:1px solid currentColor; border-bottom:0; margin-bottom:5px}
+.e-ms b{display:block; font-weight:700}
+.e-tag{top:calc(50% + 28px)}
+.e-meter{right:6px; bottom:calc(50% + 22px); display:flex; flex-direction:column; align-items:center; gap:1px}
+.e-meter i{width:1px; height:16px; background:currentColor; position:relative; margin-top:2px}
+.e-meter i::after{content:""; position:absolute; left:-3px; bottom:-1px; border:3.5px solid transparent; border-top:5px solid currentColor; border-bottom:0}
+.e-ends{display:flex; justify-content:space-between; font:500 11px/1 var(--font-mono); letter-spacing:.16em; color:rgba(242,239,234,.42)}
+@media (prefers-reduced-motion: reduce){ .e-num.roll{animation:none} .e-thumb,.e-anno{transition:none} }
+
+/* ---- Set G: Glow (light, gradient pills) ---- */
+.set-g{--s-bg:#E4E6EA; --s-ink:#1E222B; --s-dim:rgba(30,34,43,.16); --g1:#2F6BFF; --g2:#2BC8F0; --g3:#8BF06A; --s-font:"JetBrains Mono", ui-monospace, monospace; background:#E9EBEE}
+.set-g .force button[aria-pressed="true"]{background:#1E222B; color:#fff}
+.g-panel{position:relative; border-radius:22px; padding:clamp(16px,3vw,24px); min-height:280px; display:grid; grid-template-rows:auto 1fr; overflow:hidden;
+  background:radial-gradient(120% 90% at 32% 18%, #F6F7F9 0%, #E2E4E9 45%, #C9CCD4 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 1px 0 rgba(0,0,0,.04)}
+.g-top{display:flex; justify-content:space-between; align-items:center}
+.g-chip{font:500 11px/1 var(--font-mono); padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.75); color:#2A2F38}
+.g-badge{font:600 10px/1 var(--font-mono); letter-spacing:.1em; padding:6px 9px; border-radius:999px; background:rgba(255,255,255,.75); color:#2A2F38; border:1px solid transparent}
+.g-badge.hover,.g-badge.pressed{border-color:#2A2F38; background:#fff}
+.g-badge.drag{background:linear-gradient(90deg,var(--g1),var(--g2),var(--g3)); color:#fff}
+.g-stage{position:relative; display:grid; place-items:center; min-height:200px; outline:none; touch-action:none}
+html.kbd .g-stage:focus-visible{outline:2px dashed var(--g1); outline-offset:-8px; border-radius:16px}
+.g-pillbase{background:linear-gradient(180deg,#FCFCFD,#ECEEF1); box-shadow:0 8px 18px rgba(40,50,70,.14), inset 0 1px 0 #fff, inset 0 -1px 0 rgba(0,0,0,.04)}
+.g-dots{background-image:radial-gradient(rgba(255,255,255,.45) 1px, transparent 1.5px); background-size:9px 9px}
+
+/* stepped */
+.g-compact{position:absolute; display:flex; align-items:center; gap:14px; height:42px; padding:0 22px 0 16px; border-radius:21px; font:700 14px/1 var(--font-mono); color:#1E222B; transition:opacity .25s, transform .4s cubic-bezier(.3,1.3,.5,1)}
+.g-compact i{width:9px; height:9px; border-radius:50%; background:var(--g2); box-shadow:0 0 8px var(--g2)}
+.g-open-wrap{display:grid; justify-items:center; gap:18px; opacity:0; transform:scale(.7); pointer-events:none; transition:opacity .25s, transform .45s cubic-bezier(.3,1.3,.5,1)}
+.g-panel.is-open .g-open-wrap{opacity:1; transform:none; pointer-events:auto}
+.g-panel.is-open .g-compact{opacity:0; transform:scale(1.3); pointer-events:none}
+.g-head{font:600 12px/1 var(--font-mono); letter-spacing:.16em; color:#2A2F38}
+.g-row{position:relative; display:flex; align-items:center; gap:12px; cursor:pointer}
+.g-pill{height:44px; border-radius:22px; display:grid; place-items:center; font:600 13px/1 var(--font-mono); color:#4A4F5A; transition:transform .2s cubic-bezier(.3,1.5,.5,1)}
+.g-pill.is-hover{transform:translateY(-3px)}
+.g-blob{position:absolute; top:0; left:0; height:44px; border-radius:22px; display:grid; place-items:center; font:700 13px/1 var(--font-mono); color:#0E2A33; z-index:2; pointer-events:none; transition:box-shadow .3s, scale .2s}
+.g-panel.is-pressed .g-blob{scale:.93}
+.g-echo{position:absolute; top:0; left:0; height:44px; border-radius:22px; border:1.5px solid rgba(43,200,240,.55); pointer-events:none; z-index:1; animation:gecho .55s ease-out forwards}
+.g-echo.round{border-radius:50%}
+@keyframes gecho{from{opacity:.9} to{opacity:0; transform:scale(1.12)}}
+
+/* continuous */
+.g-range{display:grid; gap:12px; width:100%; justify-items:center}
+.g-meta{display:flex; justify-content:space-between; width:min(640px,100%); font:600 12px/1 var(--font-mono); letter-spacing:.16em; color:#2A2F38; opacity:0; transition:opacity .25s}
+.g-meta b{font-size:15px; letter-spacing:0; font-variant-numeric:tabular-nums}
+.g-panel.is-open .g-meta{opacity:1}
+.g-track{position:relative; width:124px; height:42px; border-radius:32px; cursor:pointer; transition:width .5s cubic-bezier(.3,1.2,.5,1), height .4s cubic-bezier(.3,1.3,.5,1)}
+.g-panel.is-open .g-track{width:min(640px,100%); height:64px}
+.g-ticks{position:absolute; left:30px; right:24px; top:50%; height:18px; margin-top:-9px; background:repeating-linear-gradient(90deg, rgba(110,118,130,.55) 0 1.5px, transparent 1.5px 11px); transition:left .4s}
+.g-panel:not(.is-open) .g-ticks{left:34px; right:14px; height:12px; margin-top:-6px}
+.g-fill{position:absolute; left:6px; top:6px; bottom:6px; width:52px; border-radius:26px; overflow:hidden; opacity:0; transition:opacity .25s, box-shadow .3s; box-shadow:0 0 22px rgba(43,170,255,.5)}
+.g-panel.is-open .g-fill{opacity:1}
+.g-panel.is-drag .g-fill{box-shadow:0 0 34px rgba(43,190,255,.8)}
+.g-fill-grad{position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,var(--g1),var(--g2) 60%,var(--g3))}
+.g-fill-ticks{position:absolute; left:24px; top:50%; height:18px; margin-top:-9px; background:repeating-linear-gradient(90deg, rgba(255,255,255,.7) 0 1.5px, transparent 1.5px 11px)}
+.g-fill .g-dots{position:absolute; inset:0}
+.g-knob{position:absolute; top:50%; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:#fff; box-shadow:0 0 0 3px rgba(255,255,255,.35), 0 0 10px #fff; opacity:0; transition:opacity .2s, scale .2s}
+.g-panel.is-open .g-knob{opacity:1}
+.g-panel.is-pressed .g-knob{scale:.7}
+.g-panel.is-drag .g-knob{scale:1.3}
+.g-mini{position:absolute; left:12px; top:50%; width:20px; height:20px; margin-top:-10px; border-radius:50%; border:5px solid var(--g2); background:#fff; box-shadow:0 0 8px rgba(43,200,240,.7); transition:opacity .2s}
+.g-panel.is-open .g-mini{opacity:0}
+.g-ring{position:absolute; top:50%; width:52px; height:52px; margin:-26px 0 0 -26px; border-radius:50%; border:1.5px solid rgba(43,200,240,.6); pointer-events:none; animation:gecho .55s ease-out forwards}
+@media (prefers-reduced-motion: reduce){ .g-open-wrap,.g-compact,.g-track,.g-pill{transition:none} .g-echo,.g-ring{display:none} }
+
+/* shared states */
+.shared{display:grid; gap:16px}
+.shared h2{margin:0; font-size:22px; font-weight:800; letter-spacing:-.01em}
+.tbl{overflow-x:auto; border:1px solid var(--line); border-radius:6px; background:var(--chip)}
+table{border-collapse:collapse; width:100%; min-width:640px; font-size:13px}
+th,td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+th{font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--font-mono); font-size:12px}
+</style>
+</head>
+<body>
+
+<main>
+
+
+
+
+  <!-- SET G -->
+  <section class="set set-g" data-set="g" aria-label="Glow sliders">
+    <div class="set-head">
+      <div class="force" role="group" aria-label="Preview state for Glow">
+        <button aria-pressed="true" data-f="">Live</button><button aria-pressed="false" data-f="hover">Hover</button><button aria-pressed="false" data-f="pressed">Pressed</button><button aria-pressed="false" data-f="drag">Drag</button>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="g-panel" id="g1">
+        <div class="g-top"><span class="g-chip">Stepped · 5 steps</span><span class="g-badge" data-badge>IDLE</span></div>
+        <div class="g-stage" tabindex="0" role="slider" aria-label="Focus timer">
+          <div class="g-compact g-pillbase"><i></i><span data-compact>5 min</span></div>
+          <div class="g-open-wrap">
+            <div class="g-head" data-head>FOCUS TIMER · 5 MIN</div>
+            <div class="g-row" data-row><div class="g-blob g-dots" data-blob></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="g-panel" id="g2">
+        <div class="g-top"><span class="g-chip">Continuous · 0–100</span><span class="g-badge" data-badge>IDLE</span></div>
+        <div class="g-stage" tabindex="0" role="slider" aria-label="Glow level">
+          <div class="g-range">
+            <div class="g-meta"><span>GLOW LEVEL</span><b data-pct>44%</b></div>
+            <div class="g-track g-pillbase" data-track>
+              <div class="g-ticks"></div>
+              <div class="g-fill" data-fill><div class="g-fill-grad" data-grad></div><div class="g-fill-ticks" data-fticks></div><div class="g-dots"></div></div>
+              <div class="g-mini"></div>
+              <div class="g-knob" data-knob></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <h3>Spec</h3>
+      <dl><dt>Component</dt><dd>Card radius 22 · padding 24 · radial ground #F6F7F9 → #E2E4E9 → #C9CCD4 · stage 200 px · rest state collapses to a compact pill, hover / focus expands it (450 ms, overshoot)</dd>
+          <dt>Stepped pills</dt><dd>Height 44, radius 22 · widths 44 / 54 / 64 / 86 / 112 px grow with value · gap 12 · white gradient #FCFCFD → #ECEEF1, shadow 0 8 18 rgba(40,50,70,.14) · hover lifts 3 px</dd></dl>
+      <dl><dt>Selection</dt><dd>Gradient blob slides between pills on a spring (380/30) and stretches to the target width · color shifts with value: blue #2F6BFF (5) → cyan #2BC8F0 → lime #8BF06A (60) · 9 px dot texture · echo outlines trail while dragging</dd>
+          <dt>Continuous track</dt><dd>Compact 124 × 42 → open full width (max 640) × 64, radius 32 · ticks 1.5 px every 11 px, 18 px tall · fill inset 6 px, min Ø52 at 0%, gradient fixed to the track · knob Ø10 white glow at fill end · rings Ø52 echo behind the knob while dragging</dd></dl>
+      <dl><dt>States</dt><dd>Idle: compact pill with value · Hover: expanded, badge outlined · Pressed: blob 0.93× / knob 0.7× · Drag: glow 34 px, knob 1.3×, echoes, badge gradient</dd>
+          <dt>Type</dt><dd>JetBrains Mono · header 600 12/12, +0.16em caps · pill values 600 13 · compact 700 14 · readout 600 15 tabular · chip 500 11 · badge 600 10</dd></dl>
+      <dl><dt>Color</dt><dd><span class="sw" style="background:#2F6BFF"></span>#2F6BFF → <span class="sw" style="background:#2BC8F0"></span>#2BC8F0 → <span class="sw" style="background:#8BF06A"></span>#8BF06A glow gradient<br><span class="sw" style="background:#ECEEF1"></span>#FCFCFD → #ECEEF1 pills · <span class="sw" style="background:#1E222B"></span>#1E222B text</dd></dl>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(() => {
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TAU = Math.PI*2;
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+function capsule(ctx, xa, xb, cy, R){ if (xb < xa) xb = xa; ctx.beginPath(); ctx.arc(xa,cy,R,Math.PI/2,Math.PI*1.5); ctx.arc(xb,cy,R,-Math.PI/2,Math.PI/2); ctx.closePath(); }
+function rrect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function makeBubble(bg, fg, font, radius){
+  return (ctx, s, txt, a) => {
+    ctx.save(); ctx.globalAlpha = a; ctx.font = font;
+    const w = ctx.measureText(txt).width + 18, h = 24;
+    const bx = clamp(s.x - w/2, 2, s.W - w - 2), by = (s.top != null ? s.top : s.cy - s.R*s.scale - 12) - h + (1-a)*6;
+    ctx.fillStyle = bg; rrect(ctx,bx,by,w,h,radius); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(s.x-5,by+h-0.5); ctx.lineTo(s.x+5,by+h-0.5); ctx.lineTo(s.x,by+h+5); ctx.fill();
+    ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(txt, bx + w/2, by + h/2 + 1); ctx.restore();
+  };
+}
+
+/* ---------- Set B: Curtain (skins: glass / ios) ---------- */
+const SKINS = {
+  ios:   { bg:'#F2F2F7', bars:'#007AFF', track:'#D1D1D6', ring:'rgba(0,122,255,.45)', bubBg:'#1C1C1E', bubFg:'#FFFFFF' },
+  glass: { bg:'#7E7E7E', bars:'rgba(245,245,245,.55)', track:'rgba(255,255,255,.35)', ring:'rgba(255,255,255,.55)', bubBg:'rgba(0,0,0,.3)', bubFg:'#FFFFFF' },
+};
+let bSkin = 'glass';
+const B = () => SKINS[bSkin];
+function barsB(ctx, s, color){
+  const m = s.mem, step = 7, start = s.x0 - s.R, ph = m.ph || 0;
+  const back = s.vel < 0;
+  const amp = reduce ? 0 : Math.min(back ? 6 : 4, Math.abs(s.vel)/110 * (back ? 1.3 : 1));
+  const spread = back ? 85 : 60;
+  ctx.fillStyle = color;
+  for (let i=0;i<m.h.length;i++){
+    const h = m.h[i]; if (h < 0.6) continue;
+    const px = start + i*step + 2;
+    // two travelling waves: one sets the thin line, the other the thick core
+    const w1 = reduce ? 1 : 0.6 + 0.4*(0.5 + 0.5*Math.sin(i*0.22 - ph));
+    const w2 = reduce ? 0.5 : 0.22 + 0.55*(0.5 + 0.5*Math.sin(i*0.41 + ph*1.35 + 1.3));
+    const line = h*w1, core = line*w2;
+    const env = Math.exp(-(((s.x - px)/spread)**2));
+    const cy = s.cy + Math.sin(i*0.8 - s.t*13) * amp * env;
+    ctx.fillRect(px - 1, cy - line, 2, line*2);
+    ctx.fillRect(px - 1.75, cy - core, 3.5, core*2);
+  }
+}
+function ribbonB(ctx, s, mode){
+  const {x0, x, cy, R} = s, m = s.mem;
+  const xs = x0 - R*0.6, xe = x; if (xe - xs < 6) return;
+  const K = 12, w = TAU/120, A = R*1.1*(m.amp || 1), ph0 = m.ph || 0;
+  const seg = s.stepped ? (s.x1 - x0)/s.n : 0;
+  const env = px => {
+    let e = Math.pow(Math.sin(Math.PI*clamp((px - xs)/(xe - xs), 0, 1)), 0.7);
+    if (s.stepped){ const v = (((px - x0) % seg) + seg) % seg / seg; e *= px < x0 ? 0.35 : 0.2 + 0.8*Math.sin(Math.PI*v); }
+    return e;
+  };
+  const yAt = (px, th) => { const ph = w*px - ph0; return cy + env(px)*A*(Math.sin(ph)*Math.cos(th) + 0.6*Math.cos(ph)*Math.sin(th)); };
+  const col = mode === 'glass' ? [255,255,255] : [0,122,255];
+  let g;
+  if (mode === 'knob'){ g = 'rgba(0,122,255,.18)'; }
+  else { g = ctx.createLinearGradient(xs, 0, xe, 0); g.addColorStop(0, `rgba(${col},.08)`); g.addColorStop(0.7, `rgba(${col},.32)`); g.addColorStop(1, `rgba(${col},.45)`); }
+  ctx.strokeStyle = g; ctx.lineWidth = 1;
+  for (let k=0;k<K;k++){
+    const th = -1.45 + 2.9*k/(K - 1);
+    ctx.beginPath();
+    for (let px = xs, first = true; px <= xe + 3; px += 3, first = false){ const y = yAt(Math.min(px, xe), th); first ? ctx.moveTo(px, y) : ctx.lineTo(Math.min(px, xe), y); }
+    ctx.stroke();
+  }
+  if (mode === 'knob') return;
+  // one highlighted dotted strand sweeps across the ribbon
+  const th = 1.4*Math.sin((reduce ? 0 : s.t)*0.9);
+  ctx.fillStyle = mode === 'glass' ? '#FFFFFF' : '#34C759';
+  if (mode === 'glass'){ ctx.shadowColor = 'rgba(255,255,255,.8)'; ctx.shadowBlur = 4; }
+  for (let px = xs + 4; px <= xe; px += 7){
+    const e = env(px); if (e < 0.05) continue;
+    ctx.beginPath(); ctx.arc(px, yAt(px, th), 0.9 + 1.4*e, 0, TAU); ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+}
+function stopsB(ctx, s, k, glass){
+  const {x, cy, R, n, mem:m} = s;
+  const idx = Math.round(s.p*n);
+  if (m.lastIdx !== undefined && m.lastIdx !== idx) m.pop = 1;
+  m.lastIdx = idx; m.pop = Math.max(0, (m.pop || 0) - s.dt*4);
+  const on = glass ? 'rgba(255,255,255,.9)' : '#007AFF', off = glass ? 'rgba(255,255,255,.3)' : '#C7C7CC', passed = glass ? 'rgba(255,255,255,.55)' : 'rgba(0,0,0,.18)';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  for (let i=0;i<=n;i++){
+    const sx = s.stopX(i), active = i === idx;
+    const pop = active ? (reduce ? 0 : m.pop) : 0;
+    const h = (active ? 13 : 9) + pop*6;
+    ctx.fillStyle = active ? on : (sx < x ? passed : off);
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(sx-1.5, cy+R+11-h/2, 3, h, 1.5) : ctx.rect(sx-1.5, cy+R+11-h/2, 3, h); ctx.fill();
+    if (s.labels){
+      ctx.font = (active ? '700 ' : '600 ') + '10px "Schibsted Grotesk", system-ui, sans-serif';
+      ctx.fillStyle = active ? (glass ? 'rgba(255,255,255,.92)' : '#1C1C1E') : (glass ? 'rgba(255,255,255,.42)' : '#8E8E93');
+      ctx.save(); if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '1px';
+      ctx.fillText(s.labels[i], sx, cy + R + 32); ctx.restore();
+    }
+  }
+}
+function drawB(ctx, s){
+  const {W,H,x0,x1,x,cy,R} = s, r = R*s.scale, m = s.mem, k = B(), glass = bSkin === 'glass';
+  if (glass) ctx.clearRect(0,0,W,H);
+  else { ctx.fillStyle = k.bg; ctx.fillRect(0,0,W,H); }
+  ctx.fillStyle = k.track;
+  ctx.fillRect(x, cy-0.75, Math.max(0, x1 - x), 1.5);
+  ctx.fillRect(x1-1, cy-8, 2, 16);
+  const step = 7, start = x0 - R, count = Math.ceil((x1 + R - start)/step) + 1;
+  if (!m.h || m.h.length !== count){ m.h = new Array(count).fill(0); m.hv = new Array(count).fill(0); }
+  for (let i=0;i<count;i++){
+    const px = start + i*step + 2;
+    let tgt = 0;
+    if (px <= x){ const dx = px < x0 ? x0 - px : 0; tgt = dx < R ? Math.sqrt(R*R - dx*dx) : 0; }
+    if (s.stepped && px > x0 + 4){ const seg = (x1 - x0)/s.n, d = Math.abs(((px - x0) % seg + seg) % seg); if (d < 5 || seg - d < 5) tgt = Math.min(tgt, R*0.55); }
+    if (reduce){ m.h[i] = tgt; m.hv[i] = 0; }
+    else {
+      const grow = tgt > m.h[i], kk = grow ? 320 : 220, cc = grow ? 26 : 16;
+      m.hv[i] += (kk*(tgt - m.h[i]) - cc*m.hv[i]) * s.dt; m.h[i] += m.hv[i]*s.dt;
+      if (m.h[i] < 0){ m.h[i] = 0; m.hv[i] = 0; }
+    }
+  }
+  m.ph = (m.ph || 0) + (reduce ? 0 : s.dt*(1.6 + Math.min(6, Math.abs(s.vel)/120)));
+  const ampT = 1 + (reduce ? 0 : Math.min(0.35, Math.abs(s.vel)/900));
+  if (m.amp == null){ m.amp = 1; m.av = 0; }
+  m.av += (160*(ampT - m.amp) - 10*m.av)*s.dt; m.amp += m.av*s.dt;
+  barsB(ctx, s, k.bars);
+  ribbonB(ctx, s, glass ? 'glass' : 'ios');
+  if (s.stepped) stopsB(ctx, s, k, glass);
+
+  if (glass){
+    // floor shadow under the glass thumb
+    const fy = cy + R + 7;
+    const sh = ctx.createRadialGradient(x, fy, 0, x, fy, R*1.5);
+    sh.addColorStop(0,'rgba(0,0,0,.32)'); sh.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.save(); ctx.translate(x, fy); ctx.scale(1, 0.16); ctx.translate(-x, -fy);
+    ctx.fillStyle = sh; ctx.beginPath(); ctx.arc(x, fy, R*1.5, 0, TAU); ctx.fill(); ctx.restore();
+    // frosted glass thumb
+    if (!m.buf) m.buf = document.createElement('canvas');
+    if (m.buf.width !== ctx.canvas.width || m.buf.height !== ctx.canvas.height){ m.buf.width = ctx.canvas.width; m.buf.height = ctx.canvas.height; }
+    const bk = m.buf.getContext('2d'); bk.setTransform(1,0,0,1,0,0); bk.clearRect(0,0,m.buf.width,m.buf.height); bk.drawImage(ctx.canvas,0,0);
+    ctx.save(); ctx.beginPath(); ctx.arc(x,cy,r,0,TAU); ctx.clip();
+    ctx.filter = 'blur(7px)'; ctx.drawImage(m.buf, 0, 0, W, H); ctx.filter = 'none';
+    ctx.fillStyle = 'rgba(255,255,255,.16)'; ctx.fillRect(x-r, cy-r, r*2, r*2);
+    const hl = ctx.createLinearGradient(x-r, cy-r, x+r*0.4, cy+r);
+    hl.addColorStop(0,'rgba(255,255,255,.28)'); hl.addColorStop(.5,'rgba(255,255,255,0)'); hl.addColorStop(1,'rgba(255,255,255,.08)');
+    ctx.fillStyle = hl; ctx.fillRect(x-r, cy-r, r*2, r*2);
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x,cy,r-0.5,0,TAU); ctx.stroke();
+  } else {
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.18)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+    ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(x,cy,r,0,TAU); ctx.fill(); ctx.restore();
+    ctx.strokeStyle = 'rgba(0,0,0,.05)'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.arc(x,cy,r,0,TAU); ctx.stroke();
+    ctx.save(); ctx.beginPath(); ctx.arc(x,cy,r,0,TAU); ctx.clip(); barsB(ctx, s, 'rgba(0,122,255,.22)'); ctx.restore();
+  }
+  if (s.hover || s.focus){
+    ctx.save(); ctx.strokeStyle = k.ring; ctx.lineWidth = glass ? 1.5 : 2; if (s.focus) ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.arc(x,cy,r+6,0,TAU); ctx.stroke(); ctx.restore();
+  }
+}
+const bubbleB = (ctx, s, txt, a) => makeBubble(B().bubBg, B().bubFg, '15px Anton, Impact, sans-serif', 8)(ctx, s, txt, a);
+
+/* ---------- Set E: Tempo (DOM) ---------- */
+class TempoSlider {
+  constructor(root, cfg){
+    this.root = root; this.cfg = cfg;
+    const q = sel => root.querySelector(sel);
+    this.track = q('.e-track'); this.thumb = q('[data-tv]'); this.tv = q('.e-tv'); this.fill = q('.e-fill'); this.rims = [...root.querySelectorAll('.e-rim')]; this.mx = null;
+    this.ghost = q('.e-ghost'); this.ghostTxt = q('.e-ghost span');
+    this.num = q('[data-num]'); this.name = q('[data-name]'); this.badge = q('[data-badge]');
+    this.ms = q('.e-ms'); this.aval = q('[data-aval]'); this.tag = q('.e-tag'); this.aname = q('[data-aname]');
+    this.stepped = !!cfg.steps; this.n = this.stepped ? cfg.steps.length - 1 : 0;
+    this.p = cfg.init; this.dp = cfg.init; this.vp = 0; this.t = 0;
+    this.hover = this.pressed = this.drag = false; this.forced = null; this.hoverF = null; this.last = '';
+    this.fill.hidden = this.stepped;
+    this.stops = [];
+    if (this.stepped) for (let i=0;i<=this.n;i++){ const d = document.createElement('div'); d.className = 'e-stop'; this.track.insertBefore(d, this.ghost); this.stops.push(d); }
+    this.track.setAttribute('aria-valuemin', 0); this.track.setAttribute('aria-valuemax', this.stepped ? this.n : 100);
+    this.bind(); this.aria();
+  }
+  get pad(){ return 46; }
+  frac(cx){ const b = this.track.getBoundingClientRect(); return clamp((cx - b.left - this.pad)/(b.width - 2*this.pad), 0, 1); }
+  snap(f){ return this.stepped ? Math.round(f*this.n)/this.n : f; }
+  set(f){ this.p = this.snap(clamp(f,0,1)); this.aria(); }
+  info(f){ return this.stepped ? this.cfg.steps[Math.round(f*this.n)] : this.cfg.cont(f); }
+  aria(){ const i = this.info(this.p); this.track.setAttribute('aria-valuenow', this.stepped ? Math.round(this.p*this.n) : Math.round(this.p*100)); this.track.setAttribute('aria-valuetext', i.v + ' ' + this.cfg.unit + ', ' + i.name); }
+  bind(){
+    const tr = this.track;
+    tr.addEventListener('pointerenter', () => this.hover = true);
+    tr.addEventListener('pointerleave', () => { if (!this.pressed){ this.hover = false; this.hoverF = null; } });
+    tr.addEventListener('pointerdown', e => {
+      e.preventDefault(); tr.focus({preventScroll:true, focusVisible:false});
+      this.pressed = true; this.drag = false; this.downX = e.clientX;
+      tr.setPointerCapture(e.pointerId); this.set(this.frac(e.clientX));
+    });
+    tr.addEventListener('pointermove', e => {
+      this.hoverF = this.frac(e.clientX);
+      if (!this.pressed) return;
+      if (Math.abs(e.clientX - this.downX) >= 3) this.drag = true;
+      this.raw = this.frac(e.clientX); this.set(this.raw);
+    });
+    const up = e => { this.raw = null; this.pressed = false; this.drag = false;
+      const b = tr.getBoundingClientRect(); this.hover = e.clientX >= b.left && e.clientX <= b.right && e.clientY >= b.top - 8 && e.clientY <= b.bottom + 8; };
+    tr.addEventListener('pointerup', up); tr.addEventListener('pointercancel', up);
+    tr.addEventListener('keydown', e => {
+      const unit = this.stepped ? 1/this.n : (e.shiftKey ? 0.1 : 0.01);
+      const map = { ArrowRight:unit, ArrowUp:unit, ArrowLeft:-unit, ArrowDown:-unit, PageUp:0.1, PageDown:-0.1 };
+      if (e.key in map){ e.preventDefault(); this.set(this.p + map[e.key]); }
+      else if (e.key === 'Home'){ e.preventDefault(); this.set(0); }
+      else if (e.key === 'End'){ e.preventDefault(); this.set(1); }
+    });
+  }
+  tick(dt){
+    const w = this.track.clientWidth; if (!w) return;
+    this.t += dt;
+    const f = this.forced;
+    const hov = f ? f === 'hover' : this.hover;
+    const prs = f ? f === 'pressed' : (this.pressed && !this.drag);
+    const drg = f ? f === 'drag' : this.drag;
+    let target = (this.stepped && this.drag && this.raw != null) ? this.raw : this.p;
+    if (f === 'drag') target = this.stepped ? Math.round(clamp(0.5 + Math.sin(this.t*1.3)*0.5, 0, 1)*this.n)/this.n : clamp(this.p + Math.sin(this.t*1.6)*0.22, 0, 1);
+    if (reduce){ this.dp = target; this.vp = 0; }
+    else { const k = this.stepped ? 300 : 900, c = this.stepped ? 2*Math.sqrt(300) : 60; this.vp += (k*(target - this.dp) - c*this.vp)*dt; this.dp += this.vp*dt; }
+    const pad = this.pad, span = w - 2*pad, xp = pad + clamp(this.dp,0,1)*span;
+    this.thumb.style.left = xp + 'px';
+    if (!this.stepped) this.fill.style.width = (xp + 16) + 'px';
+    this.stops.forEach((d,i) => d.style.left = (pad + (i/this.n)*span) + 'px');
+
+    const shownF = this.stepped ? this.snap(f === 'drag' ? target : (this.drag && this.raw != null ? this.raw : this.p)) : clamp(this.dp,0,1);
+    const info = this.info(shownF);
+    const key = info.v + '|' + info.name;
+    if (key !== this.last){
+      this.num.textContent = info.v; this.tv.textContent = info.v; this.name.textContent = info.name;
+      this.aval.textContent = info.sub; this.aname.textContent = info.name.toUpperCase();
+      if (this.stepped || Math.abs(this.vp) < 0.05){ this.num.classList.remove('roll'); void this.num.offsetWidth; this.num.classList.add('roll'); }
+      this.last = key;
+    }
+    // rim light follows the pointer while hovering, otherwise rides under the thumb
+    const gx = (hov && !drg && this.hoverF != null) ? pad + this.hoverF*span : xp;
+    this.mx = (this.mx == null || reduce) ? gx : this.mx + (gx - this.mx)*Math.min(1, dt*14);
+    this.rims.forEach(r => r.style.setProperty('--mx', (this.mx + 2) + 'px'));
+    this.root.style.setProperty('--px', (this.mx + 30) + 'px');
+    this.ms.style.left = clamp(xp - 72, 0, w - 90) + 'px';
+    this.tag.style.left = clamp(xp - 28, 0, w - 110) + 'px';
+
+    const gf = f === 'hover' ? clamp(this.p + 0.18, 0, 1) : this.hoverF;
+    const showGhost = hov && !drg && !prs && gf != null && Math.abs(gf - this.dp)*span > 40;
+    this.ghost.style.opacity = showGhost ? 1 : 0;
+    if (gf != null){ this.ghost.style.left = (pad + gf*span) + 'px'; this.ghostTxt.textContent = this.info(this.snap(gf)).v; }
+
+    const st = drg ? 'drag' : prs ? 'pressed' : hov ? 'hover' : 'idle';
+    if (this.badge.dataset.st !== st){ this.badge.dataset.st = st; this.badge.textContent = st.toUpperCase(); this.badge.className = 'badge ' + st; }
+    this.root.classList.toggle('is-hover', hov); this.root.classList.toggle('is-pressed', prs); this.root.classList.toggle('is-drag', drg);
+  }
+}
+const gainDb = p => p <= 0 ? '−∞ dB' : (20*Math.log10(p)).toFixed(1).replace('-', '−') + ' dB';
+const mixName = v => v === 0 ? 'Muted' : v < 35 ? 'Low' : v < 80 ? 'Monitor' : 'Loud';
+
+/* ---------- Set G: Glow (DOM) ---------- */
+const G_COLORS = [['#2F6BFF','#3D8BFF'],['#2F7DFF','#2BB8F5'],['#22A8F5','#2BD8E8'],['#2BD3EE','#5EEA9A'],['#7EEB7A','#C9F55A']];
+const G_GLOW = ['rgba(47,107,255,.55)','rgba(43,150,255,.55)','rgba(43,200,240,.55)','rgba(60,225,190,.55)','rgba(150,240,90,.6)'];
+function gStates(o){
+  const f = o.forced;
+  return { hov: f ? f === 'hover' : o.hover, prs: f ? f === 'pressed' : (o.pressed && !o.drag), drg: f ? f === 'drag' : o.drag };
+}
+function gBadge(o, st){ if (o.badge.dataset.st !== st){ o.badge.dataset.st = st; o.badge.textContent = st.toUpperCase(); o.badge.className = 'g-badge ' + st; } }
+class GlowStepper {
+  constructor(root, cfg){
+    this.root = root; this.cfg = cfg; const q = x => root.querySelector(x);
+    this.stage = q('.g-stage'); this.row = q('[data-row]'); this.blob = q('[data-blob]'); this.head = q('[data-head]');
+    this.compact = q('[data-compact]'); this.badge = q('[data-badge]');
+    this.pills = cfg.values.map((v,i) => { const d = document.createElement('div'); d.className = 'g-pill g-pillbase'; d.style.width = cfg.widths[i] + 'px'; d.textContent = v; this.row.insertBefore(d, this.blob); return d; });
+    this.n = cfg.values.length - 1; this.idx = cfg.init; this.t = 0;
+    this.bx = null; this.bw = null; this.vx = 0; this.vw = 0; this.lastEcho = null;
+    this.hover = this.pressed = this.drag = this.focus = false; this.forced = null; this.hoverIdx = -1; this.shown = -1;
+    this.stage.setAttribute('aria-valuemin', 0); this.stage.setAttribute('aria-valuemax', this.n);
+    this.bind(); this.aria();
+  }
+  nearest(cx){ let best = 0, bd = 1e9; this.pills.forEach((p,i) => { const b = p.getBoundingClientRect(), d = Math.abs(b.left + b.width/2 - cx); if (d < bd){ bd = d; best = i; } }); return best; }
+  set(i){ this.idx = clamp(i, 0, this.n); this.aria(); }
+  aria(){ this.stage.setAttribute('aria-valuenow', this.idx); this.stage.setAttribute('aria-valuetext', this.cfg.values[this.idx] + ' minutes'); }
+  bind(){
+    const st = this.stage, row = this.row;
+    st.addEventListener('pointerenter', () => this.hover = true);
+    st.addEventListener('pointerleave', () => { if (!this.pressed){ this.hover = false; this.hoverIdx = -1; } });
+    row.addEventListener('pointerdown', e => {
+      e.preventDefault(); st.focus({preventScroll:true, focusVisible:false});
+      this.pressed = true; this.drag = false; this.downX = e.clientX; row.setPointerCapture(e.pointerId); this.set(this.nearest(e.clientX));
+    });
+    row.addEventListener('pointermove', e => {
+      this.hoverIdx = this.nearest(e.clientX);
+      if (!this.pressed) return;
+      if (Math.abs(e.clientX - this.downX) >= 3) this.drag = true;
+      this.set(this.hoverIdx);
+    });
+    const up = e => { this.pressed = false; this.drag = false; const b = st.getBoundingClientRect(); this.hover = e.clientX >= b.left && e.clientX <= b.right && e.clientY >= b.top && e.clientY <= b.bottom; };
+    row.addEventListener('pointerup', up); row.addEventListener('pointercancel', up);
+    st.addEventListener('focus', () => this.focus = true); st.addEventListener('blur', () => this.focus = false);
+    st.addEventListener('keydown', e => {
+      const map = { ArrowRight:1, ArrowUp:1, ArrowLeft:-1, ArrowDown:-1 };
+      if (e.key in map){ e.preventDefault(); this.set(this.idx + map[e.key]); }
+      else if (e.key === 'Home'){ e.preventDefault(); this.set(0); }
+      else if (e.key === 'End'){ e.preventDefault(); this.set(this.n); }
+    });
+  }
+  tick(dt){
+    this.t += dt;
+    const {hov, prs, drg} = gStates(this);
+    const open = hov || prs || drg || this.focus || !!this.forced;
+    this.root.classList.toggle('is-open', open); this.root.classList.toggle('is-pressed', prs); this.root.classList.toggle('is-drag', drg);
+    let idx = this.idx;
+    if (this.forced === 'drag') idx = Math.round((0.5 + Math.sin(this.t*1.4)*0.5)*this.n);
+    const pill = this.pills[idx]; if (!pill.offsetWidth) return;
+    const tx = pill.offsetLeft, tw = pill.offsetWidth;
+    if (this.bx == null || reduce){ this.bx = tx; this.bw = tw; this.vx = this.vw = 0; }
+    else {
+      this.vx += (380*(tx - this.bx) - 30*this.vx)*dt; this.bx += this.vx*dt;
+      this.vw += (380*(tw - this.bw) - 30*this.vw)*dt; this.bw += this.vw*dt;
+    }
+    const stretch = reduce ? 0 : Math.min(30, Math.abs(this.vx)/25);
+    this.blob.style.transform = `translateX(${this.bx - stretch/2}px)`; this.blob.style.width = (this.bw + stretch) + 'px';
+    if (idx !== this.shown){
+      const v = this.cfg.values[idx], [c1, c2] = G_COLORS[idx];
+      this.blob.style.backgroundColor = c1;
+      this.blob.style.backgroundImage = `radial-gradient(rgba(255,255,255,.45) 1px, transparent 1.5px), linear-gradient(90deg, ${c1}, ${c2})`;
+      this.blob.style.backgroundSize = '9px 9px, 100% 100%';
+      this.blob.style.boxShadow = `0 0 24px ${G_GLOW[idx]}, inset 0 1px 0 rgba(255,255,255,.4)`;
+      this.blob.textContent = v; this.head.textContent = `FOCUS TIMER · ${v} MIN`; this.compact.textContent = v + ' min';
+      this.shown = idx;
+    }
+    if (drg && !reduce && (this.lastEcho == null || Math.abs(this.bx - this.lastEcho) > 16)){
+      const e = document.createElement('div'); e.className = 'g-echo';
+      e.style.transform = `translateX(${this.bx}px)`; e.style.width = this.bw + 'px';
+      this.row.appendChild(e); setTimeout(() => e.remove(), 600); this.lastEcho = this.bx;
+    }
+    if (!drg) this.lastEcho = null;
+    this.pills.forEach((p,i) => p.classList.toggle('is-hover', hov && !drg && i === this.hoverIdx && i !== idx));
+    gBadge(this, drg ? 'drag' : prs ? 'pressed' : hov ? 'hover' : 'idle');
+  }
+}
+class GlowRange {
+  constructor(root, cfg){
+    this.root = root; this.cfg = cfg; const q = x => root.querySelector(x);
+    this.stage = q('.g-stage'); this.track = q('[data-track]'); this.fill = q('[data-fill]'); this.grad = q('[data-grad]'); this.fticks = q('[data-fticks]');
+    this.knob = q('[data-knob]'); this.pct = q('[data-pct]'); this.badge = q('[data-badge]');
+    this.p = cfg.init; this.dp = cfg.init; this.vp = 0; this.t = 0; this.lastRing = null; this.last = '';
+    this.hover = this.pressed = this.drag = this.focus = false; this.forced = null;
+    this.stage.setAttribute('aria-valuemin', 0); this.stage.setAttribute('aria-valuemax', 100);
+    this.bind(); this.aria();
+  }
+  frac(cx){ const b = this.track.getBoundingClientRect(); return clamp((cx - b.left - 32)/(b.width - 64), 0, 1); }
+  set(f){ this.p = clamp(f, 0, 1); this.aria(); }
+  aria(){ this.stage.setAttribute('aria-valuenow', Math.round(this.p*100)); this.stage.setAttribute('aria-valuetext', Math.round(this.p*100) + ' percent'); }
+  bind(){
+    const st = this.stage, tr = this.track;
+    st.addEventListener('pointerenter', () => this.hover = true);
+    st.addEventListener('pointerleave', () => { if (!this.pressed) this.hover = false; });
+    tr.addEventListener('pointerdown', e => {
+      e.preventDefault(); st.focus({preventScroll:true, focusVisible:false});
+      this.pressed = true; this.drag = false; this.downX = e.clientX; tr.setPointerCapture(e.pointerId);
+      if (this.root.classList.contains('is-open')) this.set(this.frac(e.clientX));
+    });
+    tr.addEventListener('pointermove', e => {
+      if (!this.pressed) return;
+      if (Math.abs(e.clientX - this.downX) >= 3) this.drag = true;
+      this.set(this.frac(e.clientX));
+    });
+    const up = e => { this.pressed = false; this.drag = false; const b = st.getBoundingClientRect(); this.hover = e.clientX >= b.left && e.clientX <= b.right && e.clientY >= b.top && e.clientY <= b.bottom; };
+    tr.addEventListener('pointerup', up); tr.addEventListener('pointercancel', up);
+    st.addEventListener('focus', () => this.focus = true); st.addEventListener('blur', () => this.focus = false);
+    st.addEventListener('keydown', e => {
+      const unit = e.shiftKey ? 0.1 : 0.01, map = { ArrowRight:unit, ArrowUp:unit, ArrowLeft:-unit, ArrowDown:-unit, PageUp:0.1, PageDown:-0.1 };
+      if (e.key in map){ e.preventDefault(); this.set(this.p + map[e.key]); }
+      else if (e.key === 'Home'){ e.preventDefault(); this.set(0); }
+      else if (e.key === 'End'){ e.preventDefault(); this.set(1); }
+    });
+  }
+  tick(dt){
+    this.t += dt;
+    const {hov, prs, drg} = gStates(this);
+    const open = hov || prs || drg || this.focus || !!this.forced;
+    this.root.classList.toggle('is-open', open); this.root.classList.toggle('is-pressed', prs); this.root.classList.toggle('is-drag', drg);
+    const target = this.forced === 'drag' ? clamp(this.p + Math.sin(this.t*1.6)*0.3, 0, 1) : this.p;
+    if (reduce){ this.dp = target; this.vp = 0; }
+    else { this.vp += (900*(target - this.dp) - 60*this.vp)*dt; this.dp += this.vp*dt; }
+    const w = this.track.clientWidth; if (!w) return;
+    const d = clamp(this.dp, 0, 1), fw = 52 + d*(w - 12 - 52), kx = 6 + fw - 26;
+    this.fill.style.width = fw + 'px';
+    this.grad.style.width = (w - 12) + 'px'; this.fticks.style.width = (w - 54) + 'px';
+    this.knob.style.left = kx + 'px';
+    const txt = Math.round(d*100) + '%';
+    if (txt !== this.last){ this.pct.textContent = txt; this.last = txt; }
+    if (drg && open && !reduce && (this.lastRing == null || Math.abs(kx - this.lastRing) > 18)){
+      const r = document.createElement('div'); r.className = 'g-ring'; r.style.left = kx + 'px';
+      this.track.appendChild(r); setTimeout(() => r.remove(), 600); this.lastRing = kx;
+    }
+    if (!drg) this.lastRing = null;
+    gBadge(this, drg ? 'drag' : prs ? 'pressed' : hov ? 'hover' : 'idle');
+  }
+}
+
+/* ---------- Slider engine ---------- */
+class Slider {
+  constructor(root, cfg){
+    this.root = root; this.cfg = cfg; this.R = cfg.R; this.H = 150;
+    this.canvas = root.querySelector('canvas'); this.ctx = this.canvas.getContext('2d');
+    this.valEl = root.querySelector('[data-val]');
+    this.stepped = !!cfg.steps; this.n = this.stepped ? cfg.steps.length - 1 : 0;
+    this.p = cfg.init; this.dp = cfg.init; this.vp = 0;
+    this.scale = 1; this.bub = 0; this.t = 0; this.mem = {}; this.W = 0;
+    this.hover = this.pressed = this.drag = this.focus = false; this.forced = null; this.lastLabel = '';
+    root.setAttribute('aria-valuemin', 0);
+    root.setAttribute('aria-valuemax', this.stepped ? this.n : 100);
+    this.bind(); this.aria();
+    new ResizeObserver(() => this.resize()).observe(this.canvas); this.resize();
+  }
+  resize(){
+    const w = this.canvas.clientWidth; if (!w) return;
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    this.canvas.width = Math.round(w*dpr); this.canvas.height = Math.round(this.H*dpr);
+    this.ctx.setTransform(dpr,0,0,dpr,0,0); this.W = w; this.mem.pat = null;
+  }
+  get pad(){ return this.R + 14; }
+  frac(clientX){ const b = this.canvas.getBoundingClientRect(); return clamp((clientX - b.left - this.pad)/(this.W - 2*this.pad), 0, 1); }
+  set(f){ f = clamp(f,0,1); if (this.stepped) f = Math.round(f*this.n)/this.n; this.p = f; this.aria(); }
+  label(p){ return this.stepped ? this.cfg.steps[Math.round(p*this.n)] : this.cfg.format(p); }
+  aria(){
+    this.root.setAttribute('aria-valuenow', this.stepped ? Math.round(this.p*this.n) : Math.round(this.p*100));
+    this.root.setAttribute('aria-valuetext', (this.cfg.ariaFmt || (t=>t))(this.label(this.p)));
+  }
+  bind(){
+    const c = this.canvas;
+    c.addEventListener('pointerenter', () => this.hover = true);
+    c.addEventListener('pointerleave', () => { if (!this.pressed) this.hover = false; });
+    c.addEventListener('pointerdown', e => {
+      e.preventDefault(); this.root.focus({preventScroll:true});
+      this.pressed = true; this.drag = false; this.downX = e.clientX; this.hover = true;
+      c.setPointerCapture(e.pointerId); c.classList.add('grabbing'); this.set(this.frac(e.clientX));
+    });
+    c.addEventListener('pointermove', e => {
+      if (!this.pressed) return;
+      if (Math.abs(e.clientX - this.downX) >= 3) this.drag = true;
+      this.raw = this.frac(e.clientX); this.set(this.raw);
+    });
+    const up = e => { this.raw = null; this.pressed = false; this.drag = false; c.classList.remove('grabbing');
+      const b = c.getBoundingClientRect(); this.hover = e.clientX >= b.left && e.clientX <= b.right && e.clientY >= b.top && e.clientY <= b.bottom; };
+    c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
+    this.root.addEventListener('focus', () => this.focus = this.root.matches(':focus-visible'));
+    this.root.addEventListener('blur', () => this.focus = false);
+    this.root.addEventListener('keydown', e => {
+      const unit = this.stepped ? 1/this.n : (e.shiftKey ? 0.1 : 0.01);
+      const map = { ArrowRight:unit, ArrowUp:unit, ArrowLeft:-unit, ArrowDown:-unit, PageUp:0.1, PageDown:-0.1 };
+      if (e.key in map){ e.preventDefault(); this.set(this.p + map[e.key]); this.focus = true; }
+      else if (e.key === 'Home'){ e.preventDefault(); this.set(0); }
+      else if (e.key === 'End'){ e.preventDefault(); this.set(1); }
+    });
+  }
+  tick(dt){
+    if (!this.W) { this.resize(); if (!this.W) return; }
+    this.t += dt;
+    const f = this.forced;
+    const hov = f ? f === 'hover' : this.hover;
+    const prs = f ? f === 'pressed' : (this.pressed && !this.drag);
+    const drg = f ? f === 'drag' : this.drag;
+    let target = (this.stepped && this.drag && this.raw != null) ? this.raw : this.p;
+    if (f === 'drag') target = this.stepped
+      ? Math.round(clamp(0.5 + Math.sin(this.t*1.3)*0.5, 0, 1)*this.n)/this.n
+      : clamp(this.p + Math.sin(this.t*1.6)*0.22, 0, 1);
+    if (reduce){ this.dp = target; this.vp = 0; }
+    else {
+      const k = this.stepped ? 300 : 900, c = this.stepped ? 2*Math.sqrt(300) : 60;
+      this.vp += (k*(target - this.dp) - c*this.vp)*dt; this.dp += this.vp*dt;
+    }
+    const st = prs ? 0.86 : drg ? 0.95 : hov ? 1.08 : 1;
+    this.scale += (st - this.scale)*(reduce ? 1 : Math.min(1, dt*18));
+    this.bub += (((drg || prs) ? 1 : 0) - this.bub)*(reduce ? 1 : Math.min(1, dt*16));
+
+    const pad = this.pad, x0 = pad, x1 = this.W - pad, span = x1 - x0;
+    const shown = clamp(this.dp, 0, 1);
+    const s = { W:this.W, H:this.H, R:this.R, x0, x1, cy:this.H*0.47, x:x0 + shown*span, vel:this.vp*span,
+      scale:this.scale, hover:hov, pressed:prs, drag:drg, focus:this.focus && !f, t:this.t, dt, mem:this.mem,
+      stepped:this.stepped, n:this.n, labels:this.cfg.steps, stopX:i => x0 + (i/this.n)*span };
+    this.cfg.draw(this.ctx, s);
+    const lab = this.stepped ? this.label(f === 'drag' ? target : this.p) : this.label(shown);
+    if (this.bub > 0.02) this.cfg.bubble(this.ctx, s, lab, this.bub);
+    if (lab !== this.lastLabel){ this.valEl.textContent = lab; this.lastLabel = lab; }
+  }
+}
+
+const $el = id => document.getElementById(id);
+const sliders = {
+  b: [
+    $el('b1') && new Slider($el('b1'), { R:26, steps:['OFF','DIM','LOW','MID','HIGH','FULL'], init:0.6, draw:drawB,
+      bubble:bubbleB }),
+    $el('b2') && new Slider($el('b2'), { R:26, init:0.45, format:p => String(Math.round(p*100)), ariaFmt:t => t + ' percent', draw:drawB,
+      bubble:bubbleB }),
+  ],
+  e: [
+    $el('e1') && new TempoSlider($el('e1'), { unit:'BPM', init:0,
+      steps:[60,80,100,120,140].map((v,i) => ({ v, name:['Largo','Andante','Moderato','Allegro','Presto'][i], sub: Math.round(60000/v) + ' ms' })) }),
+    $el('e2') && new TempoSlider($el('e2'), { unit:'percent', init:0.58,
+      cont: p => { const v = Math.round(p*100); return { v, name: mixName(v), sub: gainDb(v/100) }; } }),
+  ],
+  g: [
+    $el('g1') && new GlowStepper($el('g1'), { values:[5,15,25,45,60], widths:[44,54,64,86,112], init:0 }),
+    $el('g2') && new GlowRange($el('g2'), { init:0.44 }),
+  ],
+};
+
+Object.keys(sliders).forEach(k => sliders[k] = sliders[k].filter(Boolean));
+document.querySelectorAll('.set').forEach(set => {
+  const group = sliders[set.dataset.set] || [];
+  set.querySelectorAll('.force button[data-f]').forEach(btn => btn.addEventListener('click', () => {
+    set.querySelectorAll('.force button[data-f]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+    group.forEach(sl => sl.forced = btn.dataset.f || null);
+  }));
+});
+
+document.querySelectorAll('#skin button').forEach(btn => btn.addEventListener('click', () => {
+  bSkin = btn.dataset.skin;
+  document.querySelectorAll('#skin button').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+  document.querySelector('.set-b').classList.toggle('glass', bSkin === 'glass');
+}));
+addEventListener('keydown', e => { if (e.key === 'Tab' || e.key.startsWith('Arrow')) document.documentElement.classList.add('kbd'); }, true);
+addEventListener('pointerdown', () => document.documentElement.classList.remove('kbd'), true);
+const all = Object.values(sliders).flat();
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(0.04, (now - last)/1000); last = now;
+  for (const sl of all){ try { sl.tick(dt); } catch(e){ console.error(e); } }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
