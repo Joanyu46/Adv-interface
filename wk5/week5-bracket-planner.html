@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Bracket Planner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gloock&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: a black planner sheet on the left, anatomy / configurations / states on the right, spec below.
+   Look: an open-call poster. Black, white hairline brackets around every row, a classic display serif, nothing else. One committed dark look. */
+:root{
+  color-scheme:dark;
+  --page:#000000; --sheet:#000000; --panel:#0C0C0C; --ink:#F4F3EF; --ink2:rgba(244,243,239,.74); --ink3:rgba(244,243,239,.5); --line:rgba(244,243,239,.9); --rule:rgba(244,243,239,.14);
+  --pink:#FF3D8B; --pinkfill:rgba(255,61,139,.22);
+  --serif:"Gloock", "Bodoni Moda", Georgia, serif;
+  --sans:"Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --soft:cubic-bezier(.32,1.12,.42,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--page)}
+body{background:var(--page); color:var(--ink); font-family:var(--sans); font-variation-settings:normal; font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px)); padding-block:44px 72px}
+main{max-width:1120px; margin:0 auto; display:grid; gap:48px}
+button{font:inherit; color:inherit}
+
+header.top{display:grid; gap:14px; max-width:760px}
+.eyebrow{font:500 11px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--ink2)}
+h1{position:relative; justify-self:start; margin:0; padding:.12em 0 .02em; font:400 clamp(56px,10vw,116px)/.9 var(--serif); text-transform:uppercase; letter-spacing:-.01em}
+.lede{margin:0; color:var(--ink2); max-width:60ch; font-size:16px}
+
+.stage{display:grid; grid-template-columns:400px minmax(0,1fr); gap:40px; align-items:start}
+@media (max-width:980px){ .stage{grid-template-columns:minmax(0,1fr)} .sheet{margin-inline:auto} }
+
+/* ---------- planner sheet ---------- */
+.sheet{position:relative; width:min(400px,100%); min-height:760px; background:var(--sheet); padding:18px 14px 22px; display:grid; gap:16px; align-content:start; overflow:hidden; box-shadow:inset 0 0 0 1px var(--rule)}
+.meta{display:flex; justify-content:space-between; font:500 10.5px/1.3 var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--ink3)}
+.hdr{display:grid; gap:6px}
+.hbar{height:26px; display:flex; align-items:center; justify-content:space-between}
+.back{all:unset; display:flex; align-items:center; gap:6px; height:26px; padding:0 10px; margin-left:-4px; border-radius:999px; cursor:pointer; font:500 11px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase;
+  opacity:0; transform:translateX(-8px); pointer-events:none; transition:opacity .3s, transform .5s var(--soft), background .25s, color .25s}
+.back.show{opacity:1; transform:none; pointer-events:auto}
+.back:hover{background:var(--ink); color:var(--page)}
+.back:focus-visible{outline:1.5px dashed var(--ink); outline-offset:2px}
+.back svg{width:14px; height:14px}
+.mark{display:none !important}
+.mark i{display:block; border:1.5px solid var(--line); flex:none}
+.mark .s1{width:14px; height:14px; border-radius:50%}
+.mark .s2{width:18px; height:24px; border-radius:3px 11px 11px 3px}
+.mark .s3{width:13px; height:24px; border-radius:7px}
+.mark .s4{width:12px; height:12px; border-radius:50%}
+.tbox{position:relative; height:118px; overflow:hidden}
+.tunit{position:absolute; inset:0 30px; display:grid; align-content:center; justify-items:center; gap:4px; text-align:center}
+.tunit .big{font:400 54px/.92 var(--serif); text-transform:uppercase; letter-spacing:-.01em; white-space:nowrap}
+.tunit .big i{display:inline-block; font-style:normal}
+.tunit .side{font:500 14px/1.3 var(--sans); color:var(--ink2); white-space:nowrap}
+.hbrk{display:none !important}
+.hbrk, .rb{position:absolute; top:0; left:50%; width:100%; height:100%; transform:translateX(-50%); pointer-events:none; border:1.5px solid var(--line); border-top-color:transparent; border-bottom-color:transparent; border-radius:999px}
+.list{list-style:none; margin:0; padding:0; display:grid; gap:10px}
+.foot{display:flex; justify-content:space-between; align-items:center; margin-top:8px; font:500 9.5px/1.3 var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--ink3)}
+.foot .add{all:unset; cursor:pointer; display:flex; align-items:center; gap:8px; height:34px; padding:0 16px 0 6px; border-radius:999px; background:var(--ink); color:var(--page); font:600 12px/1 var(--sans); letter-spacing:0; text-transform:none; transition:transform .2s var(--soft)}
+.foot .add i{width:24px; height:24px; border-radius:50%; border:1.5px solid var(--page); display:grid; place-items:center}
+.foot .add svg{width:11px; height:11px}
+.foot .add:active{transform:scale(.95)}
+.foot .add:focus-visible{outline:1.5px dashed var(--ink); outline-offset:3px}
+
+/* ---------- row: content held between two brackets ---------- */
+.item{position:relative}
+.rw{position:relative}
+.row{all:unset; box-sizing:border-box; position:relative; display:flex; align-items:center; gap:14px; width:100%; height:var(--h,62px); padding:0 22px 0 30px; cursor:default; -webkit-tap-highlight-color:transparent}
+.row.h80{--h:82px}
+.row.act{cursor:pointer}
+.row > .face{display:contents}
+/* rows are closed outline shapes taken from the corner mark: D-shapes for dates, pills for everything else. Hover opens them into ( ) brackets. */
+.rb{border-top-color:var(--line); border-bottom-color:var(--line)}
+/* calendar pastels: each day carries its own color on the outline and the date */
+.rw .rb, .sub-card .rb{border-color:var(--c, var(--line))}
+.num{color:var(--c, var(--ink))}
+.rw .chip{border-color:var(--c, var(--line)); color:var(--c, var(--ink))}
+.task .tm{color:var(--c, var(--ink))}
+/* filled days: the shape is a solid pastel bar with black type; hover still opens it into ( ) and the fill follows the shape */
+.rw.filled .rb, .item.filled .sub-card .rb{background:var(--c); border-color:var(--c)}
+.rw.filled .face, .rw.filled .num, .item.filled .sub-card, .item.filled .task .tm{color:#0B0B0B}
+.rw.filled .sup, .rw.filled .ttxt, .item.filled .task .tm small{color:rgba(11,11,11,.72)}
+.rw.filled .chip{border-color:#0B0B0B; color:#0B0B0B}
+.rw.filled:is(.hot,.f-hot,.press,.f-press) .ico{background:#0B0B0B; color:var(--c)}
+.item.filled .task + .task{box-shadow:inset 0 1px 0 rgba(11,11,11,.16)}
+.item.filled .task .dur, .item.filled .avs i{border-color:#0B0B0B; background:transparent}
+.item.filled .ink path{stroke:#0B0B0B}
+.item.filled .task:focus-visible{box-shadow:inset 0 0 0 1.5px #0B0B0B}
+.rw.filled .row:focus-visible .rb, .rw.filled.f-focus .rb{border-color:#0B0B0B}
+.row .rb{border-radius:999px; transition:width .6s var(--soft), border-width .35s, border-radius .6s var(--soft), border-top-color .45s, border-bottom-color .45s, opacity .3s}
+.row.h80 .rb{border-radius:16px 999px 999px 16px}
+.sub-card .rb{border-radius:18px 80px 80px 18px}
+.row .face > *{position:relative; z-index:1; transition:transform .55s var(--soft), opacity .3s}
+.sub-card > .task{position:relative; z-index:1}
+.lead{flex:none; display:grid; place-items:center}
+.lead.date{width:52px; justify-items:start}
+.num{font:400 46px/.9 var(--serif); letter-spacing:-.02em; font-variant-numeric:lining-nums}
+.lead.ic{width:30px; height:30px; border-radius:50%; border:1.5px solid var(--line)}
+.lead.ic svg{width:14px; height:14px}
+.lead.av{width:36px; height:36px; border-radius:50%; border:1.5px solid var(--line); font:500 12px/1 var(--sans); letter-spacing:.04em}
+.txt{flex:1; min-width:0; display:grid; gap:1px}
+.lbl{font:600 17px/22px var(--sans); letter-spacing:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.sup{font:400 14px/19px var(--sans); color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.trail{flex:none; display:flex; align-items:center; gap:8px}
+.ttxt{font:500 14px/18px var(--sans); color:var(--ink2); white-space:nowrap}
+.chip{font:600 12px/1 var(--sans); padding:6px 10px; border-radius:999px; border:1px solid var(--line)}
+.ico{position:relative; width:30px; height:30px; border-radius:50%; border:1.5px solid transparent; display:grid; place-items:center; transition:background .35s, color .35s, border-color .35s, transform .55s var(--soft)}
+.ico svg{width:15px; height:15px; transition:transform .55s var(--soft)}
+.rw.open .ico svg{transform:rotate(180deg)}
+
+.rw:is(.hot,.f-hot) .rb{width:calc(100% - 14px); border-width:2px; border-radius:999px; border-top-color:transparent; border-bottom-color:transparent}
+.rw:is(.hot,.f-hot) .ico{background:var(--c, var(--ink)); color:var(--page)}
+.rw:is(.hot,.f-hot) .lead{transform:translateX(5px)}
+.rw:is(.hot,.f-hot) .txt{transform:translateX(5px)}
+.rw:is(.hot,.f-hot) .trail{transform:translateX(-5px)}
+.rw:is(.press,.f-press) .rb{width:calc(100% - 34px); border-width:2.5px; border-radius:999px; border-top-color:transparent; border-bottom-color:transparent; transition-duration:.25s}
+.rw.open .rb{border-radius:999px}
+.rw:is(.press,.f-press) .face > *{transform:scale(.97)}
+.rw:is(.press,.f-press) .ico{background:var(--c, var(--ink)); color:var(--page)}
+.row:focus-visible{outline:none}
+.row:focus-visible .rb, .rw.f-focus .rb{border-style:dashed}
+.rw.dis .row{cursor:not-allowed}
+.rw.dis .face > *{opacity:.36}
+.rw.dis .rb{opacity:.3}
+
+/* expand: a second bracket pair opens underneath, like the stacked capsules on the poster */
+.sub{display:grid; grid-template-rows:0fr; transition:grid-template-rows .6s var(--ease)}
+.item.open .sub{grid-template-rows:1fr}
+.sub-in{min-height:0; overflow:hidden}
+.sub-wrap{padding-top:10px}
+.sub-card{position:relative; display:grid; padding:20px 44px 20px 36px}
+.sub-card .rb{border-radius:80px}
+.task{position:relative; display:flex; align-items:center; gap:12px; min-height:52px; padding:6px 0; cursor:pointer; outline:none}
+.task + .task{box-shadow:inset 0 1px 0 var(--rule)}
+.task .tm{flex:none; width:50px; font:400 22px/1 var(--serif)}
+.task .tm small{display:block; font:500 10px/1.3 var(--mono); letter-spacing:.06em; color:var(--ink3); margin-top:3px}
+.task .lbl{font-size:15px; line-height:20px; font-weight:500; justify-self:start; max-width:100%}
+.task:hover .lbl, .task:focus-visible .lbl{transform:translateX(4px)}
+.task:focus-visible{box-shadow:inset 0 0 0 1.5px var(--ink); border-radius:10px}
+.task .dur{font:600 11px/1 var(--sans); padding:5px 9px; border-radius:999px; border:1px solid var(--line); white-space:nowrap}
+.avs{display:flex}
+.avs i{width:24px; height:24px; border-radius:50%; border:1px solid var(--line); background:var(--page); margin-left:-6px; display:grid; place-items:center; font:600 9px/1 var(--sans); font-style:normal}
+.task .tm, .task .dur, .task .avs{transition:opacity .3s}
+/* done / undone: a hand-drawn check and a hand-drawn strike draw themselves, like someone marked it with a pen; undoing erases them back */
+.task .tm, .task .txt{position:relative}
+.ink{position:absolute; overflow:visible; pointer-events:none}
+.ink path{fill:none; stroke:var(--ink); stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1 1.3; stroke-dashoffset:1.1; transition:stroke-dashoffset .32s cubic-bezier(.5,0,.75,0)}
+.ink.chk{left:-6px; top:-8px; width:52px; height:40px}
+.ink.chk path{stroke-width:1.9}
+.ink.strike path{stroke-width:1.5}
+.ink.strike{left:-4px; top:50%; width:calc(100% + 8px); max-width:calc(100% + 8px); height:16px; transform:translateY(-50%)}
+.task.done .ink path{stroke-dashoffset:0; transition:stroke-dashoffset .55s cubic-bezier(.65,0,.35,1)}
+.task.done .ink.strike path{transition-duration:.6s}
+.task .lbl{transition:transform .5s var(--soft), opacity .4s}
+.task.done .lbl{opacity:.55}
+.task.done .tm{opacity:1}
+.task.done .tm, .task.done .dur, .task.done .avs{opacity:.35}
+
+/* ---------- right column ---------- */
+.col{display:grid; gap:30px; min-width:0}
+.block{display:grid; gap:12px; min-width:0}
+.bh{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; border-bottom:1px solid var(--rule); padding-bottom:10px}
+.bh h2{margin:0; font:400 28px/1 var(--serif); text-transform:uppercase}
+.bh span{font:500 10.5px/1.3 var(--mono); letter-spacing:.06em; text-transform:uppercase; color:var(--ink3)}
+.panel{background:var(--panel); padding:22px 20px}
+.scroll{overflow-x:auto}
+.anats{display:flex; flex-wrap:wrap; gap:8px 24px}
+.anat{position:relative; width:396px; height:150px; flex:none}
+.anat .rw{position:absolute; left:28px; top:34px; width:340px}
+.m{position:absolute; background:var(--pinkfill); z-index:6; pointer-events:none}
+.ml{position:absolute; z-index:7; font:500 10px/1 var(--mono); color:#FFFFFF; background:var(--pink); padding:2px 3px; border-radius:3px; transform:translate(-50%,-50%); white-space:nowrap}
+.mline{position:absolute; z-index:6; border-color:var(--pink); border-style:solid; border-width:0}
+.mline.h{height:7px; border-left-width:1px; border-right-width:1px; background:linear-gradient(var(--pink),var(--pink)) center/100% 1px no-repeat}
+.mline.v{width:7px; border-top-width:1px; border-bottom-width:1px; background:linear-gradient(var(--pink),var(--pink)) center/1px 100% no-repeat}
+.cap{font:500 10px/1.3 var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--ink3)}
+.grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); gap:22px 20px}
+.cell{display:grid; gap:10px; min-width:0; align-content:start}
+
+/* ---------- spec ---------- */
+.spec{position:relative; padding:clamp(24px,4vw,40px); display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr)); gap:20px 32px; font:400 12px/18px var(--mono); box-shadow:inset 0 0 0 1px var(--rule)}
+.spec h2{grid-column:1/-1; margin:0; font:400 48px/.9 var(--serif); text-transform:uppercase}
+.spec .tone{grid-column:1/-1; margin:0; max-width:80ch; font:400 15px/1.6 var(--sans); color:var(--ink2)}
+.spec .tone b{color:var(--ink); font-weight:600}
+.spec dl{margin:0; display:grid; gap:6px; min-width:0; align-content:start}
+.spec dt{color:var(--ink3); text-transform:uppercase; font-size:10.5px; letter-spacing:.1em}
+.spec dd{margin:0 0 10px}
+.sw{display:inline-block; width:10px; height:10px; border-radius:50%; vertical-align:-1px; margin-right:6px; box-shadow:0 0 0 1px var(--rule)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{transition-duration:0s !important; transition-delay:0s !important}
+}
+</style>
+</head>
+<body>
+
+
+<main>
+  <header class="top">
+    <div class="eyebrow">Advanced Interface · Week 5 · List · Set 3</div>
+    <h1>Planner</h1>
+    <p class="lede">A planner list set like an open-call poster: black, hairline outlines, a classic display serif, and one calendar pastel per day. Date rows are D-shaped bars, the rest are pills; hovering morphs a row round and opens it into ( ) brackets. Expanding a day or the reminders closes the row into a circle, reopens it, and unfolds a second outline underneath with its tasks.</p>
+  </header>
+
+  <section class="stage">
+    <div class="sheet" aria-label="Planner prototype">
+      <div class="meta"><span>List / Set 03</span><span>Open call</span><span>Dec 2026</span></div>
+      <div class="hdr">
+        <div class="hbar"><button class="back" id="back" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span id="backlbl">December</span></button><span class="mark" id="mark" aria-hidden="true"><i class="s1"></i><i class="s2"></i><i class="s3"></i><i class="s4"></i></span></div>
+        <div class="tbox" id="tbox"><span class="hbrk" id="hbrk"></span></div>
+      </div>
+      <ul class="list" id="list"></ul>
+      <div class="foot"><span>Hover · press · tap</span><button class="add" type="button"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></i>Add task</button></div>
+    </div>
+
+    <div class="col">
+      <div class="block">
+        <div class="bh"><h2>Anatomy</h2><span>Rest and hover, px</span></div>
+        <div class="panel scroll"><div class="anats" id="anats"></div></div>
+      </div>
+      <div class="block">
+        <div class="bh"><h2>Configurations</h2><span>One structure, every slot optional</span></div>
+        <div class="panel"><div class="grid" id="variants"></div></div>
+      </div>
+      <div class="block">
+        <div class="bh"><h2>States</h2><span>Same row, five states</span></div>
+        <div class="panel"><div class="grid" id="states"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="spec" aria-label="Spec">
+    <h2>Spec</h2>
+    <p class="tone"><b>Tone:</b> elegant and quiet, like an open-call poster. Black with hairline outlines, each day in its own calendar pastel, a classic serif for dates and titles. <b>Function:</b> scan the week by date, open a day in place to see its tasks, or go to reminders, a shared calendar or next month.</p>
+    <dl>
+      <dt>Row</dt><dd>Width fills sheet (340 in anatomy) · height 82 with a date, 62 otherwise · padding 0 22 0 30 · gap 14 · rows 10 apart · closed 1.5 px outline (white 90%) taken from the corner mark: date rows are D-shapes (radius 16 / 999), other rows pills (999), sub-card a tall D (18 / 80)</dd>
+      <dt>Leading slot</dt><dd>None · icon 14 in a Ø30 ring · avatar Ø36 ring with initials · date Gloock 46/0.9 in a 52 box</dd>
+    </dl>
+    <dl>
+      <dt>Text</dt><dd>Label Instrument Sans 600 17/22<br>Supporting Instrument Sans 400 14/19, 74%<br>Truncate with ellipsis</dd>
+      <dt>Trailing slot</dt><dd>Text Instrument Sans 500 14/18, 74% · chip 500 11, 1 px outline · icon 15 in a Ø30 cell · gap 8</dd>
+    </dl>
+    <dl>
+      <dt>States</dt><dd>Enabled: closed D or pill · Hover: the outline morphs round and opens at top and bottom into ( ) brackets, pulls in 7 px each side and thickens to 2 px (600 ms), content leans in 5 px, icon cell fills white (550 ms soft spring .32 1.12 .42 1) · Pressed: brackets in 17 px, 2.5 px, content 0.97 · Focus: dashed brackets · Disabled: content 36%, brackets 30%</dd>
+    </dl>
+    <dl>
+      <dt>Expand</dt><dd>The row's brackets close into a circle while its text wipes out (380 ms), then open again as the text wipes back in · a second outline (tall D, padding 20 44 20 36 so the times sit clear of the line) opens underneath from a circle to full width (720 ms) · tasks wipe in from the left 80 ms apart · task hover: the title leans in 4 px · tap: done, a hand-drawn strike runs through the title (600 ms, ease .65 0 .35 1), 1.5 px pen line with a curl at the start · tap again: undone, the line erases back (320 ms)</dd>
+      <dt>Navigate</dt><dd>Every row and the header close into circles while their text wipes out (420 ms, 35 ms stagger) · the new page opens out of the circles and its text wipes in (680 ms, 45 ms stagger)</dd>
+    </dl>
+    <dl>
+      <dt>Color</dt><dd><span class="sw" style="background:#000000"></span>#000000 ground<br>Calendar pastels, one per day, fill the day bars and their task cards with black type: <span class="sw" style="background:#B9A8E8"></span>#B9A8E8 lavender <span class="sw" style="background:#E8A2B4"></span>#E8A2B4 rose <span class="sw" style="background:#8FD1C8"></span>#8FD1C8 teal <span class="sw" style="background:#E2B56A"></span>#E2B56A ochre · other rows stay white<br><span class="sw" style="background:#F4F3EF"></span>#F4F3EF ink and brackets · 74% / 38% for secondary text</dd>
+    </dl>
+  </section>
+</main>
+
+<script>
+(() => {
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const S = (d, w = 1.8) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const IC = {
+  chev: S('<path d="M9 6l6 6-6 6"/>', 2), caret: S('<path d="M6 9l6 6 6-6"/>', 2),
+  bell: S('<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>'),
+  sync: S('<path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/>'),
+  pin: S('<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>'),
+  dot: S('<circle cx="12" cy="12" r="3.5"/>'),
+};
+
+/* ---------- data ---------- */
+const SCREENS = {
+  dec: { big:'13 Dec', side:'Tuesday · New York 1:20 PM', title:'December', items:[
+    { id:'d13', c:'#B9A8E8', lead:{t:'date', n:'13'}, label:'Tuesday', sup:'3 tasks · first at 3:00 PM', chip:'Today', act:'expand', tasks:[
+      { tm:'3:00', ap:'PM', label:'Design critique with Dan', dur:'30 min', av:['JY','DK'] },
+      { tm:'4:20', ap:'PM', label:'Call Mina for update', dur:'25 min', av:['MC'] },
+      { tm:'6:00', ap:'PM', label:'Post week 5 to GitHub', dur:'30 min', av:['JY'] } ] },
+    { id:'d14', c:'#E8A2B4', lead:{t:'date', n:'14'}, label:'Wednesday', sup:'App update · meeting', tt:'9 AM', act:'expand', tasks:[
+      { tm:'9:00', ap:'AM', label:'App update review', dur:'1 h', av:['JY','RP','DK'] },
+      { tm:'11:00', ap:'AM', label:'Portfolio narrative', dur:'90 min', av:['JY'] } ] },
+    { id:'d15', c:'#8FD1C8', lead:{t:'date', n:'15'}, label:'Thursday', sup:'Web update', tt:'2 PM', act:'expand', tasks:[
+      { tm:'2:00', ap:'PM', label:'Web update handoff', dur:'1 h', av:['RP','MC'] } ] },
+    { id:'d16', c:'#E2B56A', lead:{t:'date', n:'16'}, label:'Friday', sup:'No tasks yet', tt:'Free' },
+    { id:'rem', lead:{t:'ic', ic:'bell'}, label:'Reminders', sup:'4 this week · 2 overdue', tt:'4', act:'expand', tasks:[
+      { tm:'10', ap:'DEC', label:'Renew studio badge', dur:'Late', av:[] },
+      { tm:'12', ap:'DEC', label:'Book print shop', dur:'Late', av:[] },
+      { tm:'15', ap:'DEC', label:'Pick up hardcover proofs', dur:'Thu', av:[] },
+      { tm:'16', ap:'DEC', label:'Send invoice to client', dur:'Fri', av:[] } ] },
+  ]},
+  rem: { big:'Reminders', side:'4 this week · 2 overdue', title:'Reminders', items:[
+    { id:'r1', lead:{t:'ic', ic:'dot'}, label:'Renew studio badge', sup:'Overdue · Dec 10', tt:'Late' },
+    { id:'r2', lead:{t:'ic', ic:'dot'}, label:'Book print shop', sup:'Overdue · Dec 12', tt:'Late' },
+    { id:'r3', lead:{t:'ic', ic:'pin'}, label:'Pick up hardcover proofs', sup:'Dec 15 · Pasadena', tt:'Thu' },
+    { id:'r4', label:'Send invoice to client', tt:'Fri' },
+  ]},
+  mina: { big:'Mina Cho', side:'Shared calendar · 3 events', title:'Mina Cho', items:[
+    { id:'m1', c:'#E8A2B4', lead:{t:'date', n:'14'}, label:'Studio hours', sup:'1:00 → 5:00 PM', tt:'Wed' },
+    { id:'m2', c:'#8FD1C8', lead:{t:'date', n:'15'}, label:'Call with Joan', sup:'4:20 → 4:45 PM', tt:'Thu' },
+    { id:'m3', c:'#E2B56A', lead:{t:'date', n:'18'}, label:'Gallery opening', sup:'7:00 PM · Chinatown', tt:'Sun' },
+  ]},
+  jan: { big:'January', side:'2027 · Spring term', title:'January 2027', items:[
+    { id:'j5', c:'#B9A8E8', lead:{t:'date', n:'05'}, label:'Monday', sup:'Spring term starts', chip:'New' },
+    { id:'j9', c:'#E8A2B4', lead:{t:'date', n:'09'}, label:'Friday', sup:'Grad show planning', tt:'10 AM' },
+    { id:'j14', c:'#8FD1C8', lead:{t:'date', n:'14'}, label:'Wednesday', sup:'Portfolio review', tt:'2 PM' },
+  ]},
+};
+
+/* ---------- render ---------- */
+function leadHTML(l){
+  if (!l) return '';
+  if (l.t === 'date') return `<span class="lead date"><span class="num">${l.n}</span></span>`;
+  if (l.t === 'av') return `<span class="lead av">${l.txt}</span>`;
+  return `<span class="lead ic">${IC[l.ic]}</span>`;
+}
+function faceHTML(it){
+  const ico = it.act ? `<span class="ico">${it.act === 'expand' ? IC.caret : IC.chev}</span>` : '';
+  const trail = (it.tt || it.chip || ico) ? `<span class="trail">${it.chip ? `<span class="chip">${it.chip}</span>` : ''}${it.tt ? `<span class="ttxt">${it.tt}</span>` : ''}${ico}</span>` : '';
+  return `${leadHTML(it.lead)}<span class="txt"><span class="lbl">${it.label}</span>${it.sup ? `<span class="sup">${it.sup}</span>` : ''}</span>${trail}`;
+}
+function taskHTML(t, i){
+  return `<div class="task" tabindex="-1" role="button" aria-pressed="false" style="--i:${i}"><span class="tm">${t.tm}<small>${t.ap}</small></span><span class="txt"><span class="lbl">${t.label}</span><svg class="ink strike" viewBox="0 0 100 20" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M1 13 C1 8 5 7 9 9 C20 13 30 12 42 10 C55 8 66 12 78 11 C88 10 94 8 99 9"/></svg></span><span class="dur">${t.dur}</span><span class="avs">${t.av.map(a => `<i>${a}</i>`).join('')}</span></div>`;
+}
+function rowHTML(it, o = {}){
+  const live = it.act && !it.dis && !o.demo, tag = live ? 'button' : 'div';
+  const attrs = live ? `type="button"${it.act === 'expand' ? ' aria-expanded="false"' : ''}` : (o.demo ? 'aria-hidden="true"' : '');
+  const hc = it.lead && it.lead.t === 'date' ? ' h80' : '';
+  const rw = `<div class="rw${it.dis ? ' dis' : ''}${it.c ? ' filled' : ''}${o.cls ? ' ' + o.cls : ''}"${it.c ? ` style="--c:${it.c}"` : ''}><${tag} class="row${hc}${it.act && !it.dis ? ' act' : ''}" ${attrs}${it.dis ? ' aria-disabled="true"' : ''}><span class="rb" aria-hidden="true"></span><span class="face">${faceHTML(it)}</span></${tag}></div>`;
+  if (o.bare) return rw;
+  const sub = it.tasks ? `<div class="sub"><div class="sub-in"><div class="sub-wrap"><div class="sub-card"><span class="rb" aria-hidden="true"></span>${it.tasks.map(taskHTML).join('')}</div></div></div></div>` : '';
+  return `<li class="item${it.c ? ' filled' : ''}" data-id="${it.id}"${it.c ? ` style="--c:${it.c}"` : ''}>${rw}${sub}</li>`;
+}
+function wire(root){
+  root.querySelectorAll('.rw').forEach(rw => {
+    if (rw.classList.contains('dis') || rw.dataset.wired) return; rw.dataset.wired = 1;
+    const row = rw.querySelector('.row');
+    row.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') rw.classList.add('hot'); });
+    row.addEventListener('pointerleave', () => rw.classList.remove('hot','press'));
+    row.addEventListener('pointerdown', () => rw.classList.add('press'));
+    ['pointerup','pointercancel'].forEach(ev => row.addEventListener(ev, () => rw.classList.remove('press')));
+    row.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) rw.classList.add('press'); });
+    row.addEventListener('keyup', () => rw.classList.remove('press'));
+    row.addEventListener('blur', () => rw.classList.remove('press'));
+  });
+}
+
+/* ---------- brackets: close into a circle while the text wipes out; open again while it wipes in (from the Open Call reference) ---------- */
+const WIPE_OUT = [{ clipPath:'inset(0 0% 0 0)' }, { clipPath:'inset(0 100% 0 0)' }];
+const WIPE_IN = [{ clipPath:'inset(0 100% 0 0)' }, { clipPath:'inset(0 0% 0 0)' }];
+function faceParts(rw){ return [...rw.querySelectorAll('.face > *')]; }
+function closeRow(rw, delay = 0, dur = 420){
+  const rb = rw.querySelector('.rb'), H = rw.offsetHeight;
+  rw.classList.remove('hot', 'press');
+  const a = [rb.animate([{ width:rb.offsetWidth + 'px' }, { width:H + 'px' }], { duration:dur, delay, easing:'cubic-bezier(.55,0,.25,1)', fill:'forwards' })];
+  faceParts(rw).forEach(p => a.push(p.animate(WIPE_OUT, { duration:dur * .8, delay, easing:'cubic-bezier(.5,0,.3,1)', fill:'forwards' })));
+  return Promise.all(a.map(x => x.finished)).then(() => a);
+}
+function openRow(rw, delay = 0, dur = 680, from){
+  const rb = rw.querySelector('.rb'), H = rw.offsetHeight;
+  const a = rb.animate([{ width:(from ?? H) + 'px' }, { width:'100%' }], { duration:dur, delay, easing:'cubic-bezier(.22,1,.36,1)', fill:'backwards' });
+  faceParts(rw).forEach((p, i) => p.animate(WIPE_IN, { duration:dur * .85, delay:delay + 120 + i * 40, easing:'cubic-bezier(.22,1,.36,1)', fill:'backwards' }));
+  return a.finished;
+}
+
+/* ---------- header ---------- */
+const tbox = document.getElementById('tbox'), hbrk = document.getElementById('hbrk'), list = document.getElementById('list'), back = document.getElementById('back'), backlbl = document.getElementById('backlbl');
+const stack = ['dec']; let busy = false;
+function closeHeader(){
+  const u = tbox.querySelector('.tunit');
+  const a = [hbrk.animate([{ width:'100%' }, { width:'118px' }], { duration:420, easing:'cubic-bezier(.55,0,.25,1)', fill:'forwards' })];
+  if (u) a.push(u.animate(WIPE_OUT, { duration:340, easing:'cubic-bezier(.5,0,.3,1)', fill:'forwards' }));
+  return Promise.all(a.map(x => x.finished));
+}
+function setHeader(id, animate){
+  const s = SCREENS[id], u = document.createElement('div'); u.className = 'tunit';
+  u.innerHTML = `<span class="big">${[...s.big].map(c => `<i>${c === ' ' ? '&nbsp;' : c}</i>`).join('')}</span><span class="side">${s.side}</span>`;
+  const old = tbox.querySelector('.tunit'); if (old) old.remove(); tbox.appendChild(u);
+  back.classList.toggle('show', stack.length > 1);
+  backlbl.textContent = stack.length > 1 ? SCREENS[stack[stack.length-2]].title : 'December';
+  hbrk.getAnimations().forEach(x => x.cancel());
+  if (!animate || reduce) return;
+  hbrk.animate([{ width:'118px' }, { width:'100%' }], { duration:720, easing:'cubic-bezier(.22,1,.36,1)', fill:'backwards' });
+  u.animate(WIPE_IN, { duration:640, delay:140, easing:'cubic-bezier(.22,1,.36,1)', fill:'backwards' });
+  u.querySelectorAll('.big i').forEach((c, i) => c.animate([{ transform:'translateY(40%)', opacity:0 }, { transform:'none', opacity:1 }], { duration:560, delay:160 + i * 28, easing:'cubic-bezier(.22,1,.36,1)', fill:'backwards' }));
+}
+
+/* ---------- outline mark ---------- */
+const markEls = [...document.querySelectorAll('#mark i')];
+const REST = ['50%', '3px 11px 11px 3px', '7px', '50%'], BLOB = ['45% 55% 40% 74%', '12px 6px 14px 4px', '9px 4px 9px 4px', '74% 40% 55% 45%'];
+function tumble(power = 1){
+  if (reduce) return;
+  markEls.forEach((el, i) => {
+    const rot = (i % 2 ? -1 : 1) * (18 + Math.random() * 28) * power, dx = (Math.random() * 8 - 4) * power, dy = (Math.random() * 6 - 3) * power;
+    el.animate([{ transform:'none', borderRadius:REST[i] }, { transform:`translate(${dx}px,${dy}px) rotate(${rot}deg)`, borderRadius:BLOB[i], offset:.45 }, { transform:`rotate(${-rot * .15}deg)`, borderRadius:REST[i], offset:.8 }, { transform:'none', borderRadius:REST[i] }],
+      { duration:1000 + i * 60, delay:i * 50, easing:'cubic-bezier(.32,1.12,.42,1)' });
+  });
+}
+if (!reduce) setInterval(() => { if (!document.hidden) tumble(.5); }, 4200);
+
+/* ---------- navigate: everything closes into circles, the next page opens out of them ---------- */
+function render(id){ list.innerHTML = SCREENS[id].items.map(it => rowHTML(it)).join(''); wire(list); }
+async function go(id, dir, focusTo){
+  if (busy) return; busy = true;
+  if (dir === 'fwd') stack.push(id); else stack.pop();
+  tumble(1.3);
+  if (!reduce){
+    const rws = [...list.querySelectorAll(':scope > .item > .rw')];
+    list.querySelectorAll('.sub').forEach(s => s.animate([{ opacity:1 }, { opacity:0 }], { duration:200, fill:'forwards' }));
+    await Promise.all([closeHeader(), ...rws.map((rw, i) => closeRow(rw, i * 35))]);
+  }
+  render(id); setHeader(id, true);
+  if (!reduce) [...list.querySelectorAll(':scope > .item > .rw')].forEach((rw, i) => openRow(rw, i * 45));
+  if (focusTo !== undefined){ const t = focusTo ? list.querySelector(`[data-id="${focusTo}"] .row`) : list.querySelector('button.row'); t && t.focus({ preventScroll:true }); }
+  setTimeout(() => { busy = false; }, reduce ? 0 : 300);
+}
+
+/* ---------- expand: close into a circle, reopen, and a second pair opens underneath ---------- */
+async function toggle(li){
+  if (li._busy) return; li._busy = true;
+  const rw = li.querySelector('.rw'), row = li.querySelector('.row'), open = !li.classList.contains('open');
+  const card = li.querySelector('.sub-card'), crb = card.querySelector('.rb');
+  tumble(.7);
+  if (!reduce){
+    if (!open){
+      const ch = card.offsetHeight;
+      card.querySelectorAll('.task').forEach(t => t.animate(WIPE_OUT, { duration:260, easing:'cubic-bezier(.5,0,.3,1)', fill:'forwards' }));
+      await crb.animate([{ width:crb.offsetWidth + 'px' }, { width:Math.min(ch, 120) + 'px', opacity:.4 }], { duration:340, easing:'cubic-bezier(.55,0,.25,1)', fill:'forwards' }).finished;
+    }
+    const closed = await closeRow(rw, 0, 360);
+    li.classList.toggle('open', open); rw.classList.toggle('open', open);
+    closed.forEach(x => x.cancel());
+    openRow(rw, 0, 640);
+  } else { li.classList.toggle('open', open); rw.classList.toggle('open', open); }
+  row.setAttribute('aria-expanded', String(open));
+  card.querySelectorAll('.task').forEach(t => { t.tabIndex = open ? 0 : -1; t.getAnimations().forEach(x => x.cancel()); });
+  crb.getAnimations().forEach(x => x.cancel());
+  if (open && !reduce){
+    const ch = card.offsetHeight;
+    crb.animate([{ width:Math.min(ch, 120) + 'px', opacity:0 }, { width:Math.min(ch, 120) + 'px', opacity:1, offset:.12 }, { width:'100%', opacity:1 }], { duration:760, delay:120, easing:'cubic-bezier(.22,1,.36,1)', fill:'backwards' });
+    card.querySelectorAll('.task').forEach((t, i) => t.animate(WIPE_IN, { duration:620, delay:360 + i * 80, easing:'cubic-bezier(.22,1,.36,1)', fill:'backwards' }));
+  }
+  li._busy = false;
+}
+list.addEventListener('click', e => {
+  const task = e.target.closest('.task');
+  if (task){
+    const on = task.classList.toggle('done'); task.setAttribute('aria-pressed', String(on));
+    if (!reduce) task.querySelector('.lbl').animate(on ? [{ transform:'none' }, { transform:'translateX(3px)' }, { transform:'none' }] : [{ transform:'none' }, { transform:'translateX(-3px)' }, { transform:'none' }], { duration:520, delay:on ? 200 : 0, easing:'cubic-bezier(.32,1.12,.42,1)' });
+    return;
+  }
+  const row = e.target.closest('button.row'); if (!row) return;
+  const li = row.closest('.item'), it = SCREENS[stack[stack.length-1]].items.find(x => x.id === li.dataset.id);
+  if (!it || it.dis) return;
+  if (it.act === 'nav') go(it.to, 'fwd', e.detail === 0 ? null : undefined);
+  else if (it.act === 'expand') toggle(li);
+});
+list.addEventListener('keydown', e => { const t = e.target.closest('.task'); if (t && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); t.click(); } });
+back.addEventListener('click', e => { if (stack.length < 2) return; const from = stack[stack.length-1]; go(stack[stack.length-2], 'back', e.detail === 0 ? from : undefined); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && stack.length > 1) back.click(); });
+setHeader('dec', false); render('dec');
+
+/* ---------- anatomy ---------- */
+const M = (x,y,w,h) => `<span class="m" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"></span>`;
+const L = (x,y,t) => `<span class="ml" style="left:${x}px;top:${y}px">${t}</span>`;
+const HL = (x,y,w) => `<span class="mline h" style="left:${x}px;top:${y-3}px;width:${w}px"></span>`;
+const VL = (x,y,h) => `<span class="mline v" style="left:${x-3}px;top:${y}px;height:${h}px"></span>`;
+const AI = SCREENS.dec.items[1];
+// row origin (28,34), 340 x 82
+const A1 = rowHTML(AI, { demo:true, bare:true }) +
+  M(28,34,30,82) + M(346,34,22,82) + M(110,52,14,46) +
+  HL(28,22,30) + L(43,12,'30') + HL(58,22,52) + L(84,12,'52') + HL(110,22,14) + L(117,12,'14') + HL(346,22,22) + L(357,12,'22') +
+  VL(382,34,82) + L(390,75,'82') + HL(316,130,30) + L(331,142,'Ø30');
+const A2 = rowHTML(AI, { demo:true, bare:true, cls:'f-hot' }) + L(36,24,'in 7') + L(196,24,'bracket 2 px') + L(330,130,'fill white') + L(120,130,'content +5');
+document.getElementById('anats').innerHTML = `<div class="anat">${A1}</div><div class="anat">${A2}</div>`;
+
+/* ---------- configurations + states ---------- */
+const V = [
+  ['Date · 2 lines · chip + icon', SCREENS.dec.items[0]],
+  ['Date · 2 lines · text + icon', SCREENS.dec.items[1]],
+  ['Icon · 2 lines · text + icon', SCREENS.dec.items[4]],
+  ['No leading · 1 line · text', SCREENS.rem.items[3]],
+];
+document.getElementById('variants').innerHTML = V.map(([c,it]) => `<div class="cell"><span class="cap">${c}</span>${rowHTML(it, { demo:true, bare:true })}</div>`).join('');
+const ST = SCREENS.dec.items[1];
+const STATES = [['Enabled',''],['Hover','f-hot'],['Pressed','f-press'],['Focus','f-focus'],['Disabled','dis']];
+document.getElementById('states').innerHTML = STATES.map(([c,cls]) => `<div class="cell"><span class="cap">${c}</span>${rowHTML(cls === 'dis' ? { ...ST, dis:true } : ST, { demo:true, bare:true, cls: cls === 'dis' ? '' : cls })}</div>`).join('');
+wire(document.getElementById('variants'));
+})();
+</script>
+
+</body>
+</html>
