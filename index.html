@@ -33,7 +33,7 @@
   .week h2 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -.005em; }
   .week .sub { margin: 8px 0 0; font-size: 15px; color: var(--muted); }
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-top: 24px; }
-  @media (min-width: 900px) { .cards { grid-template-columns: repeat(3, 1fr); } #week-3 .cards { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 900px) { .cards { grid-template-columns: repeat(3, 1fr); } #week-3 .cards, #week-5 .cards { grid-template-columns: repeat(2, 1fr); } }
 
   /* ---------- a card ---------- */
   .card {
@@ -220,6 +220,22 @@
       <a class="card" href="wk4/week4-glow.html">
         <div class="thumb" style="--tb:#E9EBEE"><iframe title="Live preview of Glow" data-src="wk4/week4-glow.html" tabindex="-1" aria-hidden="true"></iframe></div>
         <div class="meta"><h3>Glow</h3><span class="tone">Playful</span></div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ WEEK 5 ============ -->
+  <section class="week" id="week-5">
+    <h2>Week 5 — Lists</h2>
+    <p class="sub">Two sets, each a list item system with leading, text and trailing slots, one row that goes a level deeper and one that expands, with hover, pressed, focus and disabled states and a spec sheet.</p>
+    <div class="cards">
+      <a class="card" href="wk5/week5-stack-list.html">
+        <div class="thumb" style="--tb:#7E7C71"><iframe title="Live preview of Stack List" data-src="wk5/week5-stack-list.html" tabindex="-1" aria-hidden="true"></iframe></div>
+        <div class="meta"><h3>Stack List</h3><span class="tone">Serene</span></div>
+      </a>
+      <a class="card" href="wk5/week5-bracket-planner.html">
+        <div class="thumb" style="--tb:#000000"><iframe title="Live preview of Bracket Planner" data-src="wk5/week5-bracket-planner.html" tabindex="-1" aria-hidden="true"></iframe></div>
+        <div class="meta"><h3>Bracket Planner</h3><span class="tone">Elegant</span></div>
       </a>
     </div>
   </section>
