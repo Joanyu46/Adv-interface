@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<title>Shade Seeker Liquid Bar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one stage with a floating bar and a sun orb; option chips and an optional spec readout below. Tone: modern, liquid, sunlit. */
+:root{
+  --bg:#F2F1EE; --stage-a:#F7F6F3; --stage-b:#E4E2DD; --glow:rgba(255,140,80,.28);
+  --ink:#1A1C19; --mute:#74746F; --chip:#FFFFFF; --line:#E0DFDA;
+  --glass:rgba(255,255,255,.78); --glass-edge:rgba(255,255,255,.95); --glass-mute:#74746F;
+  --tray:rgba(255,255,255,.42); --tray-edge:rgba(255,255,255,.8);
+  --inkbar:#111210; --inkbar-edge:rgba(255,255,255,.07); --inkbar-mute:#92928C;
+  --hov:rgba(26,28,25,.06); --prs:rgba(26,28,25,.11);
+  --sun:#FF6B2C; --sun-ink:#1A0E07; --sun-a:#FFC9A1; --sun-b:#FF7A33; --sun-c:#E9480F;
+  --spec:#D63C74; --spec-fill:rgba(214,60,116,.14);
+  --sh:0 1px 0 rgba(255,255,255,.8) inset, 0 24px 48px -18px rgba(30,24,18,.28), 0 2px 6px rgba(30,24,18,.06);
+  --font:'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono:'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F100E; --stage-a:#1B1C1A; --stage-b:#0B0C0A; --glow:rgba(255,120,60,.22);
+  --ink:#F2F2EF; --mute:#A3A39E; --chip:#1C1D1B; --line:#2E2F2C;
+  --glass:rgba(255,255,255,.08); --glass-edge:rgba(255,255,255,.14); --glass-mute:#B4B4AE;
+  --tray:rgba(255,255,255,.04); --tray-edge:rgba(255,255,255,.08);
+  --inkbar:#050505; --inkbar-edge:rgba(255,255,255,.08); --inkbar-mute:#8E8E89;
+  --hov:rgba(255,255,255,.07); --prs:rgba(255,255,255,.12);
+  --spec:#FF7AA8; --spec-fill:rgba(255,122,168,.18);
+  --sh:0 1px 0 rgba(255,255,255,.06) inset, 0 24px 48px -18px rgba(0,0,0,.8), 0 2px 6px rgba(0,0,0,.4);
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0F100E; --stage-a:#1B1C1A; --stage-b:#0B0C0A; --glow:rgba(255,120,60,.22);
+  --ink:#F2F2EF; --mute:#A3A39E; --chip:#1C1D1B; --line:#2E2F2C;
+  --glass:rgba(255,255,255,.08); --glass-edge:rgba(255,255,255,.14); --glass-mute:#B4B4AE;
+  --tray:rgba(255,255,255,.04); --tray-edge:rgba(255,255,255,.08);
+  --inkbar:#050505; --inkbar-edge:rgba(255,255,255,.08); --inkbar-mute:#8E8E89;
+  --hov:rgba(255,255,255,.07); --prs:rgba(255,255,255,.12);
+  --spec:#FF7AA8; --spec-fill:rgba(255,122,168,.18);
+  --sh:0 1px 0 rgba(255,255,255,.06) inset, 0 24px 48px -18px rgba(0,0,0,.8), 0 2px 6px rgba(0,0,0,.4);
+  color-scheme:dark }
+
+body{background:var(--bg);color:var(--ink);font-family:var(--font)}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:40px 64px;display:flex;flex-direction:column;gap:20px}
+
+.stage{position:relative;border-radius:28px;background:radial-gradient(120% 90% at 50% 0%, var(--stage-a) 0%, var(--stage-b) 100%);height:min(62vh,520px);min-height:340px;display:flex;align-items:center;overflow:hidden}
+.stage::before{content:"";position:absolute;inset:0;background:repeating-radial-gradient(circle at 30% 120%, transparent 0 46px, rgba(120,110,90,.07) 46px 47px);pointer-events:none}
+.stage-inner{width:100%;display:flex;align-items:center;gap:14px;padding-inline:40px;box-sizing:border-box;transform-origin:center;position:relative}
+.stage-inner[data-align="leading"]{justify-content:flex-start}
+.stage-inner[data-align="center"]{justify-content:center}
+.stage-inner[data-align="trailing"]{justify-content:flex-end}
+.mark{position:absolute;left:24px;top:22px;font-size:13px;font-weight:600;color:var(--mute);display:flex;align-items:center;gap:8px;z-index:1}
+.mark i{width:10px;height:10px;border-radius:50%;background:var(--sun);box-shadow:0 0 10px var(--sun)}
+
+/* ---------- bar ---------- */
+.bar{position:relative;display:flex;align-items:center;gap:4px;padding:6px;border-radius:34px;flex:none;box-shadow:var(--sh);touch-action:none;user-select:none;-webkit-user-select:none}
+.bar.glass{--soft:rgba(26,28,25,.045);background:var(--glass);border:1px solid var(--glass-edge);-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4);--m:var(--glass-mute)}
+.bar.ink{--soft:rgba(255,255,255,.06);background:var(--inkbar);border:1px solid var(--inkbar-edge);--m:var(--inkbar-mute);--hov:rgba(255,255,255,.08);--prs:rgba(255,255,255,.14)}
+.bar.dragging{cursor:grabbing}
+
+@property --l{syntax:'<length>';inherits:false;initial-value:0px}
+@property --r{syntax:'<length>';inherits:false;initial-value:56px}
+/* liquid blob: two drops, a fast lead and a slow trail, merged by a goo filter so they neck, split and re-join */
+.goo{position:absolute;inset:0;filter:url(#goo);pointer-events:none;z-index:0;opacity:0;transition:opacity .2s ease;transform:translateZ(0);contain:strict}
+.goo.moving{opacity:1;transition-duration:.08s}
+/* the darker trailing drop is switched off: only the glass pill travels */
+.goo{display:none !important}
+.goo .blob{background:#F4B385 !important;box-shadow:none !important;top:8px;height:52px}
+.gone{opacity:0 !important}
+.blob{position:absolute;top:6px;height:56px;border-radius:28px;background:var(--sun);left:var(--l);width:calc(var(--r) - var(--l));pointer-events:none;z-index:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.blob{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E"), #E87F45;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.85), inset 2px 3px 4px rgba(255,255,255,.85), inset 0 0 8px 2px rgba(252,237,226,.9), inset 0 0 18px 5px rgba(248,205,170,.5), 0 8px 18px -10px rgba(236,120,70,.4);transition:opacity .25s}
+.blob.lead{transition:opacity .25s}
+.blob{will-change:left,width;transform:translateZ(0)}
+.blob.move{animation:squish .75s linear}
+@keyframes squish{0%{transform:scaleY(1)}30%{transform:scaleY(.84)}55%{transform:scaleY(.9)}72%{transform:scale(1.04,1.06)}86%{transform:scale(.99,.98)}100%{transform:none}}
+
+.tab{position:relative;z-index:1;font:700 16px/24px var(--font);color:var(--m);background:var(--soft);border:0;height:56px;min-width:56px;padding:0 16px;border-radius:28px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;white-space:nowrap;flex:none;-webkit-tap-highlight-color:transparent;
+  transition:color .28s ease, background-color .28s ease, transform .16s ease-out, padding .46s cubic-bezier(.22,1,.36,1)}
+.tab svg{width:24px;height:24px;flex:none}
+.tab.icon{padding:0 16px}
+.tab.text{padding:0 20px}
+.tab .lbl{display:grid;grid-template-columns:0fr;opacity:0;transition:grid-template-columns .46s cubic-bezier(.22,1,.36,1), opacity .3s ease}
+.tab .lbl > span{overflow:hidden;min-width:0;display:flex;align-items:center}
+.tab .lbl b{display:block;padding-left:8px;font-weight:700}
+.badge{font:700 12px/16px var(--font);font-style:normal;margin-left:10px;padding:4px 8px;border-radius:12px;background:rgba(255,255,255,.32);box-shadow:inset 0 0 0 1px rgba(255,255,255,.45);color:#fff;font-variant-numeric:tabular-nums}
+.tab.text .badge{margin-left:8px}
+.tab[aria-selected="true"] .lbl{grid-template-columns:1fr;opacity:1}
+/* while dragging, the pill stays a round drop: labels and badges wait until you let go */
+.bar.dragging .tab .lbl{grid-template-columns:0fr !important;opacity:0 !important;transition:none !important}
+.bar.dragging .goo{opacity:0 !important}
+.bar.dragging .tab{transition:color .15s ease, background-color .15s ease}
+.bar.dragging .tab:focus-visible{outline:none}
+.tab:hover,.tab[data-force="hover"]{background:var(--hov);color:var(--ink)}
+.bar.ink .tab:hover,.bar.ink .tab[data-force="hover"],.bar.ink .tab:active,.bar.ink .tab[data-force="pressed"]{color:#F2F2EF}
+.tab:active,.tab[data-force="pressed"]{background:var(--prs);transform:scale(.95)}
+.tab[aria-selected="true"]{background:transparent !important;color:#FFFFFF !important;transition-delay:0s,0s,0s,0s}
+.tab[aria-selected="true"] svg{stroke-width:2.25;filter:drop-shadow(0 1px 1px rgba(170,70,20,.35))}
+.tab[aria-selected="true"] .lbl b{text-shadow:0 1px 1px rgba(170,70,20,.35)}
+.tab[data-force="enabled"]:not([aria-selected="true"]):hover{background:var(--soft);color:var(--m)}
+.tab:focus-visible{outline:2px solid var(--sun);outline-offset:3px}
+.bar.dragging .tab:not([aria-selected="true"]){background:var(--soft);transform:none}
+/* icon motion on select (same family as Set 1) */
+.walls,.roof,.door,.mg,.tri,.bm,.head,.body{transform-box:fill-box}
+.pop[data-id="home"] svg{animation:hop .7s cubic-bezier(.33,1,.68,1)}
+@keyframes hop{0%{transform:perspective(240px) rotateY(0) translateY(0) scale(1)}35%{transform:perspective(240px) rotateY(180deg) translateY(-4px) scale(1.08)}70%{transform:perspective(240px) rotateY(340deg) translateY(1px) scale(.98)}100%{transform:perspective(240px) rotateY(360deg) translateY(0) scale(1)}}
+.pop .roof{transform-origin:center bottom;animation:roof .7s cubic-bezier(.3,1.5,.5,1)}
+@keyframes roof{0%,30%{transform:translateY(0)}55%{transform:translateY(-2.5px)}80%{transform:translateY(.5px)}100%{transform:none}}
+.pop .walls{transform-origin:center bottom;animation:walls .7s cubic-bezier(.3,1.4,.5,1)}
+@keyframes walls{0%,55%{transform:none}72%{transform:scale(1.08,.9)}100%{transform:none}}
+.door{transform-origin:center bottom;transition:transform .35s cubic-bezier(.3,1.5,.5,1) .3s, opacity .2s .3s}
+.tab:not([aria-selected="true"]) .door{transform:scaleY(.3);opacity:0}
+.pop .mg{transform-origin:35% 35%;animation:swing .6s cubic-bezier(.3,1.2,.5,1)}
+@keyframes swing{0%{transform:rotate(0)}30%{transform:rotate(-20deg) scale(1.12)}65%{transform:rotate(10deg)}100%{transform:rotate(0)}}
+.pop .ring{stroke-dasharray:100;animation:draw .6s ease-out}
+@keyframes draw{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+.pop .tri{transform-origin:center;animation:tpop .5s .15s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes tpop{0%{transform:scale(.3)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.pop .bm{transform-origin:top center;animation:drop .55s cubic-bezier(.3,1.3,.5,1)}
+@keyframes drop{0%{transform:translateY(-6px) scaleY(.7)}55%{transform:translateY(1px) scaleY(1.08)}100%{transform:none}}
+.tab[aria-selected="true"] .bm{fill:currentColor;transition:fill .2s .2s}
+.pop .head{transform-origin:center bottom;animation:headpop .6s cubic-bezier(.3,1.3,.5,1)}
+@keyframes headpop{0%{transform:translateY(6px) scale(.5)}50%{transform:translateY(-3px) scale(1.1)}100%{transform:none}}
+.pop .body{transform-origin:center bottom;animation:squash2 .6s cubic-bezier(.3,1.3,.5,1)}
+@keyframes squash2{0%{transform:scale(1.2,.55)}40%{transform:scale(.94,1.12)}100%{transform:none}}
+.tab.text.pop > span:first-child{display:inline-block;animation:nudge .45s cubic-bezier(.3,1.4,.5,1)}
+@keyframes nudge{0%{transform:scale(.9)}60%{transform:scale(1.04)}100%{transform:none}}
+
+/* ---------- orb ---------- */
+.tray{display:flex;align-items:center;gap:10px;padding:8px;border-radius:44px;flex:none;
+  background:var(--tray);border:1px solid var(--tray-edge);box-shadow:0 30px 60px -24px rgba(30,24,18,.3), 0 1px 0 rgba(255,255,255,.7) inset;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.tray .bar{box-shadow:0 1px 0 rgba(255,255,255,.5) inset, 0 6px 14px -8px rgba(30,24,18,.3)}
+/* orb = Profile. Off: a dark pebble. Selected: it lights up like the sun. */
+.orb.off-base{}
+.orb{position:relative;width:68px;height:68px;border-radius:50%;border:0;cursor:pointer;flex:none;color:#FFFFFF;display:inline-flex;align-items:center;justify-content:center;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E"), #E67A40;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.85), inset 2px 3px 4px rgba(255,255,255,.85), inset 0 0 9px 4px rgba(252,237,226,.95), inset 0 0 18px 8px rgba(245,190,145,.7), inset 0 0 26px 12px rgba(236,146,87,.45), 0 10px 22px -8px rgba(236,120,70,.6), 0 0 18px 2px rgba(245,170,130,.3);
+  transition:transform .14s ease-out, box-shadow .3s, color .2s}
+.orb::after{content:"";position:absolute;inset:-16px;border-radius:50%;background:radial-gradient(circle at 50% 58%, rgba(240,150,105,.38) 40%, rgba(245,180,150,.14) 60%, transparent 72%);filter:blur(3px);z-index:-1;animation:breathe 3.2s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.6;transform:scale(.92)}50%{opacity:1;transform:scale(1.06)}}
+.orb[aria-selected="false"]{background:radial-gradient(circle at 34% 28%, #3A3B38 0%, #1A1B19 60%, #0B0B0A 100%);color:#D8D8D2;box-shadow:inset 0 1px 1px rgba(255,255,255,.18), inset 0 -6px 12px rgba(0,0,0,.5), 0 10px 24px -10px rgba(0,0,0,.5)}
+.orb[aria-selected="false"]::after{opacity:0;animation:none}
+.orb[aria-selected="false"]:hover{box-shadow:inset 0 1px 1px rgba(255,255,255,.25), inset 0 -6px 12px rgba(0,0,0,.5), 0 12px 28px -10px rgba(0,0,0,.6);color:#fff}
+.orb[aria-selected="true"]:hover{box-shadow:inset 0 0 0 1.5px #fff, inset 2px 3px 4px #fff, inset 0 0 9px 4px rgba(252,237,226,1), inset 0 0 18px 8px rgba(245,190,145,.75), inset 0 0 26px 12px rgba(236,146,87,.5), 0 12px 26px -8px rgba(236,120,70,.7), 0 0 24px 4px rgba(245,170,130,.4)}
+.orb[aria-selected="true"] svg{stroke-width:2.25;filter:drop-shadow(0 1px 1px rgba(170,70,20,.35))}
+.orb:active{transform:scale(.93)}
+.orb[aria-selected="true"] svg{stroke-width:2}
+.orb:focus-visible{outline:2px solid var(--sun);outline-offset:9px}
+.orb svg{width:26px;height:26px}
+@media (prefers-reduced-motion: reduce){.blob,.tab,.tab .lbl{transition:none !important}.blob.move{animation:none}.orb::after,.pop svg,.pop svg *,.pop > span{animation:none !important}.goo{filter:none}}
+
+/* ---------- spec overlay ---------- */
+.spec-on .bar{outline:1px dashed var(--spec);outline-offset:-1px}
+.spec-on .tab{box-shadow:inset 0 0 0 1px var(--spec)}
+.dim{position:absolute;font:500 11px/1 var(--mono);color:var(--spec);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3}
+.dim.h{height:12px;border-left:1px solid var(--spec);border-right:1px solid var(--spec)}
+.dim.h::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px solid var(--spec)}
+.dim.v{width:12px;border-top:1px solid var(--spec);border-bottom:1px solid var(--spec)}
+.dim.v::before{content:"";position:absolute;top:0;bottom:0;left:50%;border-left:1px solid var(--spec)}
+.dim em{font-style:normal;position:relative;background:var(--stage-a);padding:1px 3px;border-radius:3px}
+
+/* ---------- options ---------- */
+.opts{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:center}
+.seg{display:flex;gap:2px;padding:4px;border-radius:999px;background:var(--chip);border:1px solid var(--line)}
+.seg label{position:relative}
+.seg input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.seg span{display:block;font-size:13.5px;font-weight:600;color:var(--mute);padding:7px 14px;border-radius:999px;cursor:pointer;transition:background-color .15s,color .15s}
+.seg label:hover span{color:var(--ink)}
+.seg input:checked + span{background:var(--ink);color:var(--bg)}
+.seg input:focus-visible + span{outline:2px solid var(--sun);outline-offset:1px}
+
+.specs[hidden]{display:none}
+.specs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.specs > div{background:var(--chip);padding:16px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.specs h3{margin:0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.specs dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 12px;font-size:13px}
+.specs dt{color:var(--mute)}
+.specs dd{margin:0;font-family:var(--mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid var(--line)}
+@media (max-width:820px){.specs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.specs{grid-template-columns:minmax(0,1fr)}.stage-inner{padding-inline:20px}}
+</style>
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="goo" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="g"/><feComposite in="SourceGraphic" in2="g" operator="over"/></filter>
+</svg>
+<div class="wrap">
+  <div class="stage" id="stage">
+    <div class="mark"><i></i>Shade Seeker · Liquid toolbar</div>
+    <div class="stage-inner" id="inner" data-align="center"></div>
+  </div>
+
+  <div class="opts">
+    <div class="seg" role="radiogroup" aria-label="Surface">
+      <label><input type="radio" name="surf" id="sf-g" value="glass" checked><span>Glass</span></label>
+      <label><input type="radio" name="surf" id="sf-i" value="ink"><span>Ink</span></label>
+    </div>
+    <div class="seg" role="radiogroup" aria-label="Alignment">
+      <label><input type="radio" name="align" id="al-l" value="leading"><span>Left</span></label>
+      <label><input type="radio" name="align" id="al-c" value="center" checked><span>Center</span></label>
+      <label><input type="radio" name="align" id="al-r" value="trailing"><span>Right</span></label>
+    </div>
+    <div class="seg" role="radiogroup" aria-label="Button type">
+      <label><input type="radio" name="type" id="ty-i" value="icon" checked><span>Icon</span></label>
+      <label><input type="radio" name="type" id="ty-t" value="text"><span>Text</span></label>
+      <label><input type="radio" name="type" id="ty-b" value="both"><span>Icon + text</span></label>
+    </div>
+    <div class="seg" role="radiogroup" aria-label="State">
+      <label><input type="radio" name="force" id="st-live" value="" checked><span>Live</span></label>
+      <label><input type="radio" name="force" id="st-en" value="enabled"><span>Enabled</span></label>
+      <label><input type="radio" name="force" id="st-ho" value="hover"><span>Hover</span></label>
+      <label><input type="radio" name="force" id="st-pr" value="pressed"><span>Pressed</span></label>
+    </div>
+    <div class="seg" role="radiogroup" aria-label="Spec">
+      <label><input type="radio" name="spec" id="sp-off" value="off" checked><span>Spec off</span></label>
+      <label><input type="radio" name="spec" id="sp-on" value="on"><span>Spec on</span></label>
+    </div>
+  </div>
+
+  <div class="specs" id="specs" hidden>
+    <div><h3>Bar</h3><dl>
+      <dt>Height</dt><dd>68</dd><dt>Padding</dt><dd>6</dd><dt>Gap</dt><dd>4</dd><dt>Radius</dt><dd>34</dd>
+      <dt>Glass</dt><dd>white 62% · blur 24 · 1 white edge</dd><dt>Ink</dt><dd><span class="sw" style="background:#111210"></span>#111210</dd>
+      <dt>Shadow</dt><dd>0 24 48 −18 · 28%</dd></dl></div>
+    <div><h3>Tabs</h3><dl>
+      <dt>Icon tab</dt><dd>56 × 56</dd><dt>Text tab</dt><dd>H 56 · pad 0 20</dd><dt>Icon + text</dt><dd>closed 56 · open 16·24·8·label·16</dd>
+      <dt>Radius</dt><dd>28</dd><dt>Font</dt><dd>Plus Jakarta Sans 700</dd><dt>Size / line</dt><dd>16 / 24</dd>
+      <dt>Icon</dt><dd>24 · stroke 1.75 (2 selected)</dd></dl></div>
+    <div><h3>Liquid indicator</h3><dl>
+      <dt>Fill</dt><dd><span class="sw" style="background:#E5763E"></span>#E5763E core → #FCEDE2 edge</dd><dt>Glass edge</dt><dd>inset 1.5 white 85% · top-left gloss</dd><dt>Lead drop</dt><dd>420 ms · (.22,1,.36,1)</dd><dt>Trail drop</dt><dd>500 ms · (.25,1,.5,1)</dd><dt>Goo merge</dt><dd>blur 6 · alpha 18 −7 · only while moving</dd><dt>Badge</dt><dd>12/16 700 · pad 4 8 · r 12 · white 32%</dd>
+      <dt>Squish</dt><dd>scaleY 0.93 → 1.02 → 1</dd><dt>Icon motion</dt><dd>per icon · 500–700 ms (same as Set 1)</dd><dt>Drag</dt><dd>after 6 px · snaps</dd></dl></div>
+    <div><h3>States</h3><dl>
+      <dt>Enabled</dt><dd><span class="sw" style="background:#74746F"></span>#74746F · ink #92928C</dd>
+      <dt>Hover</dt><dd>ink 6% fill</dd><dt>Pressed</dt><dd>ink 11% · 0.95</dd>
+      <dt>Selected</dt><dd>white on glass sun pill</dd>
+      <dt>Focus</dt><dd>2 sun · offset 3</dd></dl></div>
+    <div><h3>Profile orb</h3><dl>
+      <dt>Size</dt><dd>68 · edge 1 white</dd><dt>Off</dt><dd><span class="sw" style="background:#1A1B19"></span>dark pebble</dd><dt>Core → rim</dt><dd>#E5763E → #F2B27F → #FCEDE2 (same as pill)</dd><dt>Glow</dt><dd>peach, centered 56% down</dd><dt>Grain</dt><dd>fractal noise 35%</dd>
+      <dt>Glow</dt><dd>0 12 40 −6 · sun 60%</dd><dt>Breathe</dt><dd>3.2 s loop</dd><dt>Press</dt><dd>0.93</dd></dl></div>
+    <div><h3>Rules</h3><dl>
+      <dt>Layout</dt><dd>4 tabs + Profile orb in a tray</dd><dt>Tray</dt><dd>pad 8 · gap 10 · r 44</dd><dt>Right</dt><dd>orb moves to the left end</dd>
+      <dt>Selected</dt><dd>always 1</dd><dt>Reduced motion</dt><dd>blob jumps, no stretch</dd></dl></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const P = {
+    home:'<path class="walls" d="M5.5 10.5v8.5a1 1 0 001 1h11a1 1 0 001-1v-8.5"/><path class="roof" d="M3 11.5L12 4l9 7.5"/><path class="door" d="M10 20v-4.5a2 2 0 014 0V20"/>',
+    find:'<g class="mg"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></g>',
+    track:'<circle class="ring" cx="12" cy="12" r="8.5" pathLength="100" transform="rotate(-90 12 12)"/><path class="tri" d="M10 8.5l5 3.5-5 3.5z"/>',
+    save:'<path class="bm" d="M7 4h10v16l-5-3.5L7 20z"/>',
+    profile:'<circle class="head" cx="12" cy="8" r="4"/><path class="body" d="M4.5 20c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5"/>',
+    start:'<path d="M8 5l11 7-11 7z" fill="currentColor"/>'
+  };
+  const icon = n => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
+  const TABS = [['home','Home'],['find','Find'],['track','Tracking'],['save','Saved'],['profile','Profile']];
+  const COUNT = {home:'3', find:'20', track:'Live', save:'4'};
+  let sel = 'home', type = 'icon', lw = {};
+  const inner = document.getElementById('inner'), stage = document.getElementById('stage');
+  const v = n => document.querySelector(`input[name="${n}"]:checked`).value;
+
+  /* label widths for the open icon+text tab */
+  const meas = document.createElement('span');
+  meas.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font:700 16px/24px var(--font)';
+  document.body.appendChild(meas);
+  function measure(){ TABS.forEach(([id,l])=>{ meas.textContent = l; lw[id] = meas.getBoundingClientRect().width; }); }
+
+  function render(){
+    const align = v('align'), force = v('force'), spec = v('spec')==='on', surf = v('surf');
+    type = v('type');
+    const tabs = TABS.filter(t=>t[0]!=='profile');
+    const bar = `<div class="bar ${surf}" role="tablist" aria-label="Main navigation"><div class="goo"><i class="blob trail"></i><i class="blob shadow"></i></div><i class="blob lead"></i>${tabs.map(([id,l])=>{
+      const s = id===sel, badge = `<em class="badge">${COUNT[id]}</em>`;
+      const inner = type==='icon' ? icon(id)+`<span class="lbl"><span>${badge}</span></span>`
+        : type==='text' ? `<span>${l}</span><span class="lbl"><span>${badge}</span></span>`
+        : icon(id)+`<span class="lbl"><span><b>${l}</b>${badge}</span></span>`;
+      const a = type!=='text' ? ` aria-label="${l}" title="${l}"` : '';
+      return `<button type="button" role="tab" class="tab ${type}" data-id="${id}" aria-selected="${s}"${a}${force?` data-force="${force}"`:''}>${inner}</button>`;
+    }).join('')}</div>`;
+    const orb = `<button type="button" role="tab" class="orb" data-id="profile" aria-label="Profile" title="Profile" aria-selected="${sel==='profile'}">${icon('profile')}</button>`;
+    inner.dataset.align = align;
+    inner.innerHTML = `<div class="tray ${surf}">${align==='trailing' ? orb+bar : bar+orb}</div>`;
+    stage.classList.toggle('spec-on', spec);
+    document.getElementById('specs').hidden = !spec;
+    place(true);
+    fit(); dims(spec);
+  }
+
+  /* final geometry of the selected tab (computed, so the blob can head there while labels are still opening) */
+  function geo(){
+    const tabs = [...inner.querySelectorAll('.tab')];
+    let x = tabs[0].offsetLeft, out = null;
+    tabs.forEach(t=>{
+      const s = t.getAttribute('aria-selected')==='true';
+      const lb = t.querySelector('.lbl'), base = t.offsetWidth - lb.offsetWidth;
+      const w = s ? base + lb.firstElementChild.scrollWidth : base;
+      if(s) out = {x, w};
+      x += w + 4;
+    });
+    return out;
+  }
+  const LEAD = '.42s cubic-bezier(.22,1,.36,1)', TRAIL = '.5s cubic-bezier(.25,1,.5,1)';
+  let settle = 0;
+  function setBlob(x, w, mode){
+    const lead = inner.querySelector('.lead'), twin = inner.querySelector('.shadow'), trail = inner.querySelector('.trail'), goo = inner.querySelector('.goo'); if(!lead) return;
+    const t = mode==='instant' ? ['none','none'] : mode==='drag' ? ['--l .08s cubic-bezier(.22,1,.36,1), --r .08s cubic-bezier(.22,1,.36,1)','--l .14s cubic-bezier(.25,1,.5,1), --r .14s cubic-bezier(.25,1,.5,1)'] : [`--l ${LEAD}, --r ${LEAD}`, `--l ${TRAIL}, --r ${TRAIL}`];
+    if(mode==='tap'){
+      // rubber band: the front edge shoots ahead, the back edge stays stuck, then lets go and snaps over with a little overshoot
+      const l0 = parseFloat(lead.style.getPropertyValue('--l')) || 0, right = x > l0;
+      const FRONT = '.32s cubic-bezier(.22,1,.36,1)', BACK = '.58s cubic-bezier(.5,-0.05,.3,1.5) .06s';
+      t[0] = right ? `--r ${FRONT}, --l ${BACK}` : `--l ${FRONT}, --r ${BACK}`;
+      lead.style.transformOrigin = right ? '100% 50%' : '0% 50%';
+    }
+    lead.style.transition = t[0] + ', opacity .25s'; twin.style.transition = t[0]; trail.style.transition = t[1];
+    [lead, twin, trail].forEach(b=>{ b.style.setProperty('--l', (b===lead ? x : x+2)+'px'); b.style.setProperty('--r', (b===lead ? x+w : x+w-2)+'px'); });
+    if(mode !== 'instant'){ // the liquid neck only shows while the drops travel
+      goo.classList.add('moving'); clearTimeout(settle);
+      if(mode !== 'drag') settle = setTimeout(()=>goo.classList.remove('moving'), 480);
+    }
+    if(mode==='tap'){ lead.classList.remove('move'); void lead.offsetWidth; lead.classList.add('move'); }
+  }
+  function place(instant){
+    const goo = inner.querySelector('.goo'), bar = inner.querySelector('.bar'), lead = inner.querySelector('.lead');
+    const g = geo();
+    if(!g){ // the orb is selected: the drops run toward it and dissolve
+      const toRight = inner.querySelector('.tray').firstElementChild === bar;
+      const x = toRight ? bar.clientWidth - 62 : 6;
+      lead.classList.add('gone'); goo.classList.add('gone'); setBlob(x, 56, instant ? 'instant' : 'tap'); return;
+    }
+    goo.classList.remove('gone'); lead.classList.remove('gone');
+    setBlob(g.x, g.w, instant ? 'instant' : 'tap');
+  }
+
+  function select(t, move, quiet){
+    if(t.getAttribute('aria-selected')==='true') return;
+    sel = t.dataset.id;
+    inner.querySelectorAll('[role="tab"]').forEach(b=>{
+      const on = b===t; b.setAttribute('aria-selected', on); b.classList.remove('pop');
+      if(type==='both' && b.classList.contains('tab')){ if(on){ b.removeAttribute('aria-label'); b.removeAttribute('title'); } else { const l = TABS.find(x=>x[0]===b.dataset.id)[1]; b.setAttribute('aria-label', l); b.setAttribute('title', l); } }
+    });
+    if(!quiet){ void t.offsetWidth; t.classList.add('pop'); }
+    if(move) place(false);
+  }
+
+  /* tap + drag */
+  let drag = null, justDragged = false;
+  inner.addEventListener('pointerdown', e=>{
+    const bar = e.target.closest('.bar'); if(!bar || e.button > 0) return;
+    drag = {bar, x0:e.clientX, on:false, id:e.pointerId};
+  });
+  /* drag runs on one animation frame loop: the drop eases toward the finger every frame, no CSS transitions to restart */
+  function dragFrame(){
+    if(!drag || !drag.on) return;
+    drag.cx += (drag.tx - drag.cx) * 0.38;
+    const x = drag.cx - 28;
+    drag.blobs.forEach(b=>{ b.style.setProperty('--l', x+'px'); b.style.setProperty('--r', (x+56)+'px'); });
+    let best = 0, bd = 1e9;
+    drag.centers.forEach((c,i)=>{ const d = Math.abs(c - drag.tx); if(d < bd){ bd = d; best = i; } });
+    if(drag.tabs[best].getAttribute('aria-selected') !== 'true') select(drag.tabs[best], false, true);
+    drag.raf = requestAnimationFrame(dragFrame);
+  }
+  inner.addEventListener('pointermove', e=>{
+    if(!drag || e.pointerId !== drag.id) return;
+    const {bar} = drag;
+    if(!drag.on){
+      if(Math.abs(e.clientX - drag.x0) < 6) return;
+      drag.on = true; bar.classList.add('dragging');
+      if(document.activeElement && bar.contains(document.activeElement)) document.activeElement.blur();
+      try{bar.setPointerCapture(e.pointerId);}catch(_){}
+      const lead = bar.querySelector('.lead');
+      lead.classList.remove('gone'); bar.querySelector('.goo').classList.remove('gone');
+      drag.blobs = [lead];
+      drag.blobs.forEach(b=>{ b.style.transition = 'opacity .25s'; });
+      clearTimeout(settle); bar.querySelector('.goo').classList.remove('moving');
+      void bar.offsetWidth; // labels are collapsed now, so tab centers stay put during the drag
+      drag.tabs = [...bar.querySelectorAll('.tab')];
+      drag.centers = drag.tabs.map(t=>t.offsetLeft + t.offsetWidth/2);
+      drag.rect = bar.getBoundingClientRect(); drag.k = drag.rect.width / bar.offsetWidth; drag.w = bar.offsetWidth;
+      const l = parseFloat(lead.style.getPropertyValue('--l')) || 6, r = parseFloat(lead.style.getPropertyValue('--r')) || 62;
+      drag.cx = (l + r) / 2;
+      drag.raf = requestAnimationFrame(dragFrame);
+    }
+    drag.tx = Math.max(34, Math.min(drag.w - 34, (e.clientX - drag.rect.left) / drag.k));
+  });
+  const endDrag = ()=>{
+    if(!drag) return;
+    if(drag.on){
+      cancelAnimationFrame(drag.raf);
+      const trail = drag.bar.querySelector('.trail'), twin = drag.bar.querySelector('.shadow'), x = drag.cx - 28;
+      [trail, twin].forEach(b=>{ b.style.transition = 'none'; b.style.setProperty('--l', x+'px'); b.style.setProperty('--r', (x+56)+'px'); });
+      drag.bar.classList.remove('dragging'); justDragged = true; setTimeout(()=>justDragged=false, 60);
+      void drag.bar.offsetWidth; place(false);
+      const st = drag.bar.querySelector('.tab[aria-selected="true"]');
+      if(st){ st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop'); }
+    }
+    drag = null;
+  };
+  inner.addEventListener('pointerup', endDrag);
+  inner.addEventListener('pointercancel', endDrag);
+  inner.addEventListener('click', e=>{
+    if(justDragged) return;
+    const t = e.target.closest('.tab, .orb'); if(t) select(t, true);
+  });
+
+  function fit(){
+    inner.style.transform = '';
+    const need = inner.querySelector('.tray').offsetWidth + 2*parseFloat(getComputedStyle(inner).paddingLeft) + (type==='both' ? 80 : 0);
+    const s = Math.min(1, stage.clientWidth / need);
+    inner.style.transform = s < 1 ? `scale(${s})` : '';
+  }
+  function dims(on){
+    stage.querySelectorAll('.dim').forEach(d=>d.remove());
+    if(!on) return;
+    const r0 = stage.getBoundingClientRect(), bar = stage.querySelector('.bar').getBoundingClientRect();
+    const ts = [...stage.querySelectorAll('.tab')].map(t=>t.getBoundingClientRect());
+    const k = bar.height / 70;
+    const add=(c,x,y,w,h,t)=>{const d=document.createElement('div');d.className='dim '+c;Object.assign(d.style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px'});d.innerHTML=`<em>${t}</em>`;stage.appendChild(d);};
+    const ox = bar.left-r0.left, oy = bar.top-r0.top, by = oy+bar.height+14;
+    add('h', ox, oy-26, bar.width, 12, Math.round(bar.width/k));
+    ts.forEach((t,i)=>{ add('h', t.left-r0.left, by, t.width, 12, Math.round(t.width/k)); if(i<ts.length-1) add('h', t.right-r0.left, by+18, ts[i+1].left-t.right, 12, '4'); });
+    add('h', ox, by+18, ts[0].left-bar.left, 12, '6');
+    add('v', bar.right-r0.left+14, oy, 12, bar.height, '68');
+    add('v', ox-26, ts[0].top-r0.top, 12, ts[0].height, '56');
+  }
+
+  document.querySelectorAll('.opts input').forEach(i=>i.addEventListener('change', render));
+  window.addEventListener('resize', render);
+  measure(); render();
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ measure(); render(); });
+})();
+</script>
+
+</body>
+</html>
